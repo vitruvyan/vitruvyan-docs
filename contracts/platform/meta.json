@@ -1,0 +1,9 @@
+{
+  "title": "Platform Contracts",
+  "pages": [
+    "README",
+    "UPDATE_SYSTEM_CONTRACT_V1",
+    "PACKAGE_MANAGER_SYSTEM_CONTRACT_V1",
+    "DOCS_FEDERATION_CONTRACT_V1"
+  ]
+}

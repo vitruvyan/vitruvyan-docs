@@ -1,0 +1,106 @@
+# Vitruvyan Core — Changelog
+
+> **Last updated**: April 9, 2026
+
+Cronologia consolidata di tutte le milestone architetturali di Vitruvyan Core, dalla fondazione al V1.0.
+
+---
+
+## Apr 9, 2026 — v1.22.0: vit CLI Distribution Pipeline
+
+**Tag**: `v1.22.0` | **Channel**: `stable` | **Commit**: `adc4233`
+
+Versione stabile del sistema di distribuzione `vit` CLI. Refactoring architetturale, packaging pipeline, e fix critici all'upgrade workflow.
+
+**Features:**
+- `vit` platform refactored into `system/` (OS primitives: CI, notifications, executor) and `apps/` (CLI, installer, registry, remote) — zero breaking changes, shims backward-compat preserved
+- `scripts/build_vit_package.py`: packaging pipeline completo — costruisce `.vit.tar.gz`, calcola SHA-256, pubblica su `vitruvyan/vitruvyan-packages` (repo privato GitHub)
+- Private registry auth: risoluzione token a cascata `VIT_GITHUB_TOKEN` → `GITHUB_TOKEN` → `gh auth token` per download da `raw.githubusercontent.com` e GitHub Release assets
+
+**Fixes:**
+- `vit upgrade`: non sovrascrive più la directory `ui/` (guard `UPGRADE_EXCLUDED_PATHS`)
+- `vit upgrade`: non blocca più su prompt interattivi git (`GIT_TERMINAL_PROMPT=0`)
+- `vit install`: import lazy di `httpx` previene `ModuleNotFoundError` su fresh install
+- `vit list --all`: `VERTICAL_TEMPLATE.vit` escluso — manifest con placeholder `<DOMAIN>` non compilati vengono ignorati
+
+---
+
+## Feb 17, 2026 — Android Oculus Prime App Roadmap
+
+Planning document created for Android edge client development (`docs/planning/ANDROID_OCULUS_PRIME_APP_ROADMAP_FEB17_2026.md`):
+- Analyzed existing Edge Gateway + Oculus Prime API architecture for Android integration.
+- Proposed 3-module Android SDK: `sdk-core` (networking + contracts), `sdk-offline` (SQLite outbox + sync), `sdk-sensors` (camera, audio, GPS helpers).
+- Designed offline-first architecture with local queuing, background sync via WorkManager, and retry policies.
+- Specified security layer: device identity, token encryption (EncryptedSharedPreferences), HMAC payload signing, optional mTLS.
+- Defined 5-sprint implementation roadmap (SDK foundation → demo app → IoT sensors → security → E2E validation).
+- Reference implementation target: Jetpack Compose app with camera capture, gallery upload, GPS tracking, and real-time status dashboard.
+
+## Feb 17, 2026 — LangGraph 1.0.8 Production Upgrade
+
+Graph Orchestrator upgraded from LangGraph 0.5.4 to 1.0.8 (major version jump). Isolated test container validated compatibility. Dependencies upgraded: `langgraph-checkpoint` 2.1.2 → 4.0.0, `langgraph-prebuilt` 0.5.2 → 1.0.7, `langgraph-sdk` 0.1.74 → 0.3.6. All functional tests passed. Production deployment successful (port 9004, service healthy, dispatch endpoint validated).
+
+## Feb 17, 2026 — Edge Intake Compliance Refactor (Service Layer)
+
+`services/api_edge_oculus_prime` aligned to LIVELLO 2 service logic for service-side I/O:
+- Added `adapters/persistence.py` as dedicated DB read adapter for health/evidence/pipeline/events endpoints.
+- Removed downstream coupling from Intake API read models (`cognitive_entities` queries removed).
+- Kept Streams-native emission path unchanged (`intake.evidence.created`) with append-only persistence.
+- Updated intake docs to reflect `intake_event_failures` naming and Streams consumer-group semantics.
+- Added tests for persistence adapter, routes, and document ingest flow (insert + emit behavior).
+
+## Feb 17, 2026 — Oculus Prime Event Naming Migration (Versioned)
+
+Versioned migration introduced for event naming consistency in edge ingestion:
+- Added canonical channel `oculus_prime.evidence.created` with schema `vitruvyan://oculus_prime/events/evidence_created/v2.0`.
+- Preserved legacy alias `intake.evidence.created` for backward compatibility.
+- Implemented rollout modes via `OCULUS_PRIME_EVENT_MIGRATION_MODE`: `dual_write` (default), `v2_only`, `v1_only`.
+- Updated emitter audit metadata to include migration mode and emitted channels.
+- Added v2 schema file and migration tests for dual-write/rollback behavior.
+
+## Jan 25–26, 2026 — Herald → Redis Streams Migration: 100% Complete
+
+All 7 listeners migrated from pub/sub Herald to Redis Streams. ReadOnlyError fix (2-line fix in `listener_adapter.py`). Shadow Traders + MCP Listener migrated (Phase 3 of 3).
+
+## Jan 24, 2026 — Cognitive Bus Phase 6: Plasticity System
+
+Bounded, auditable, reversible parameter adaptation. Consumers learn from outcomes with 5 structural guarantees (bounded, auditable, reversible, opt-in, governance-validated). 6/6 tests passing.
+
+## Jan 24, 2026 — Cognitive Bus Phase 0: Bus Hardening (BREAKING)
+
+Redis Streams made canonical transport. Pub/Sub archived. Fixed BaseConsumer (broken async), unified 4 incompatible event models into `TransportEvent` / `CognitiveEvent` / `EventAdapter`.
+
+## Jan 20, 2026 — Cognitive Bus Phase 4: Working Memory System
+
+Distributed working memory for consumers. Octopus-mycelium architecture: isolated local memory + optional mycelial sharing via events. Memory Inspector API for debugging.
+
+## Jan 19, 2026 — Cognitive Bus Phase 3: Socratic Pattern (non_liquet)
+
+Orthodoxy Wardens gained epistemic gatekeeping: 5-state verdict system (blessed, purified, heretical, non_liquet, clarification_needed). Vitruvyan can now explicitly say "I don't know" instead of hallucinating.
+
+## Dec 30, 2025 — v1.0.0 Milestone: Domain-Agnostic Framework Complete
+
+Vitruvyan Core declared production-ready. Phases 1–3D complete. Mercator (finance) validated as PoC. Vitruvyan (governance) ready to proceed.
+
+## Dec 30, 2025 — Phase 3D: Neural Engine Integration Pattern
+
+Canonical integration pipeline: NE → VWRE → VARE → VEE. VerticalOrchestrator, BatchProcessor, ResultAggregator utilities. Mercator-lite demo vertical as proof-of-concept.
+
+## Dec 30, 2025 — Phase 3: Domain Abstraction (VEE/VARE/VWRE)
+
+VEE, VARE, VWRE engines refactored from finance-specific to domain-agnostic. 3 abstract contracts (Explainability, Risk, Aggregation) + 3 finance provider implementations for backward compatibility. COO approval granted.
+
+## Dec 29, 2025 — Phase 1E: Neural Engine Abstraction
+
+Domain-agnostic Neural Engine: `AbstractFactor`, `NormalizerStrategy`, `AggregationProfile` contracts + `EvaluationOrchestrator` + 3 built-in normalizers (ZScore, MinMax, Rank).
+
+## Dec 29, 2025 — Phase 1D: Node Abstraction (Finance Logic Removal)
+
+Finance-specific logic removed from 5 LangGraph nodes. Boot test validated all containers (zero import errors, APIs responsive).
+
+## Dec 28, 2025 — Phase 1A–1C: Foundation & Domain Contracts
+
+Repository created (vitruvyan_os → vitruvyan_core), package renamed, domain contracts defined (`EntitySchema`, `SignalSchema`, `DomainPolicy`), `GenericDomain` fallback implemented.
+
+---
+
+> **Note**: This file consolidates 21 per-phase reports that existed in this directory prior to Feb 16, 2026. The original detailed reports are preserved in git history.

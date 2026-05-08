@@ -1,0 +1,10 @@
+{
+  "title": "Core Agents",
+  "pages": [
+    "README",
+    "COGNITIVE_LAYER",
+    "DUAL_MEMORY_RAG",
+    "LLM_LAYER",
+    "PROMPT_GOVERNANCE"
+  ]
+}

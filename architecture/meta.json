@@ -1,0 +1,10 @@
+{
+  "title": "Architecture",
+  "pages": [
+    "DUAL_MEMORY_LAYER",
+    "SACRED_ORDERS_REFACTORING_PLAN",
+    "SEMANTIC_ONTOLOGY_ARCHITECTURE",
+    "PIPELINE_E2E",
+    "TECHNICAL_DEBT_AUDIT"
+  ]
+}

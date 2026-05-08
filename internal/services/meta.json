@@ -1,0 +1,18 @@
+{
+  "title": "Platform APIs",
+  "pages": [
+    "README",
+    "EMBEDDING_API",
+    "CONCLAVE_API",
+    "NEURAL_ENGINE_API",
+    "VERITAS_ENGINE_API",
+    "HORIZON_ENGINE_API",
+    "BABEL_GARDENS_API",
+    "PATTERN_WEAVERS_API",
+    "CODEX_HUNTERS_API",
+    "MEMORY_ORDERS_API",
+    "ORTHODOXY_WARDENS_API",
+    "VAULT_KEEPERS_API",
+    "EDGE_OCULUS_PRIME"
+  ]
+}

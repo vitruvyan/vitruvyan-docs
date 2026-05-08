@@ -1,0 +1,12 @@
+{
+  "title": "Getting Started",
+  "pages": [
+    "VITRUVYAN_OVERVIEW",
+    "QUICK_START",
+    "Vitruvyan_Epistemic_Charter",
+    "VITRUVYAN_PIPELINE_WALKTHROUGH",
+    "SACRED_ORDERS_INTRO",
+    "SACRED_ORDER_PATTERN_INTRO",
+    "TEMPLATE_SACRED_ORDER_COMPONENT"
+  ]
+}

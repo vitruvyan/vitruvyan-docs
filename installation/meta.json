@@ -1,0 +1,12 @@
+{
+  "title": "Installation",
+  "pages": [
+    "README",
+    "REQUIREMENTS",
+    "LOCAL",
+    "DOCKER",
+    "PRODUCTION",
+    "ENV_VARS",
+    "HEALTH_CHECKS"
+  ]
+}

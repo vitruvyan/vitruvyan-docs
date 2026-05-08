@@ -1,0 +1,130 @@
+domain_name: "example"
+domain_version: "0.1.0"
+contract_version: "1.1.0"
+status: "draft" # draft|active|deprecated
+
+# ============================================================================
+# COMPATIBILITY (UPDATE SYSTEM CONTRACT V1)
+# ============================================================================
+# Required for `vit` update/upgrade system.
+# See: docs/contracts/platform/UPDATE_SYSTEM_CONTRACT_V1.md
+
+compatibility:
+  min_core_version: "1.0.0"          # REQUIRED (SemVer, minimum supported Core version)
+  max_core_version: "1.x.x"          # REQUIRED (SemVer with wildcard, maximum supported Core version)
+  contracts_major: 1                  # REQUIRED (integer, must match Core's contracts major version)
+  update_channel: "stable"            # REQUIRED ("stable" | "beta")
+  breaking_changes_allowlist: []      # OPTIONAL (list of breaking change IDs to opt-in)
+  smoke_tests_timeout: 300            # OPTIONAL (seconds, default 300 = 5 minutes)
+
+# ============================================================================
+# NOTIFICATIONS (UPDATE SYSTEM NOTIFICATIONS)
+# ============================================================================
+# Optional notification settings for Core update alerts.
+# See: docs/contracts/platform/UPDATE_SYSTEM_CONTRACT_V1.md (Phase 4)
+
+notifications:
+  enabled: true                       # OPTIONAL (bool, default true)
+  channels:                           # OPTIONAL (list, default ["desktop", "log"])
+    - "desktop"                       # Desktop notifications (notify-send/osascript/win10toast)
+    - "log"                           # Log file (~/.vitruvyan/update_notifications.log)
+    # - "webhook"                     # HTTP webhook (Slack/generic)
+    # - "email"                       # Email (SMTP)
+  
+  check_on_startup: true              # OPTIONAL (bool, check updates on service startup)
+  check_interval_hours: 24            # OPTIONAL (int, hours between periodic checks, default 24)
+  
+  # Desktop notification settings
+  desktop_urgency: "normal"           # OPTIONAL ("low" | "normal" | "critical", default "normal")
+  
+  # Webhook settings (if "webhook" channel enabled)
+  webhook_url: ""                     # OPTIONAL (string, HTTP endpoint for webhook)
+  webhook_format: "slack"             # OPTIONAL ("slack" | "generic", default "slack")
+  
+  # Email settings (if "email" channel enabled)
+  email_to: ""                        # OPTIONAL (string, recipient email address)
+  email_from: "vitruvyan@example.com" # OPTIONAL (string, sender email address)
+  smtp_host: "smtp.gmail.com"         # OPTIONAL (string, SMTP server hostname)
+  smtp_port: 587                      # OPTIONAL (int, SMTP port, default 587)
+  smtp_user: ""                       # OPTIONAL (string, SMTP username)
+  smtp_password: ""                   # OPTIONAL (string, SMTP password - use env var instead)
+
+ownership:
+  team: "domain-team"
+  tech_lead: "name.surname"
+  contact: "team@example.com"
+
+required_components:
+  intent_config: true
+  prompts: true                   # MUST: register_<domain>_prompts() factory
+  graph_nodes_registry: true      # MUST: get_<domain>_graph_nodes() factory
+  governance_rules: true          # MUST: domain governance rules
+  readme: true
+  manifest: true
+
+# =============================================================================
+# SACRED ORDERS DOMAIN PACKS (Contract §13 — MUST)
+# =============================================================================
+# Each Sacred Order MUST be specialized for the domain.
+# The core is agnostic so that domains CAN specialize it;
+# not specializing defeats the architecture's purpose.
+
+sacred_orders_packs:
+  pattern_weavers: true           # MUST: taxonomy_<domain>.yaml + weave_config.py
+  babel_gardens: true             # MUST: signals_<domain>.yaml + <domain>_context.py
+  orthodoxy_wardens: true         # MUST: compliance_config.py
+  memory_orders: false            # MUST when domain has persistent data
+  vault_keepers: false            # MUST when domain has persistent data
+  codex_hunters: false            # MAY: source-agnostic by design
+
+optional_components:
+  graph_plugin: false             # DEPRECATED — use graph_nodes/registry.py
+  graph_nodes: true               # Canonical pattern (graph_nodes/registry.py)
+  slot_filler: false
+  response_formatter: false
+  execution_config: false         # SHOULD when exec intents need domain data
+  entity_resolver_config: false
+  neural_engine: false            # SHOULD when domain has structured scoring
+
+adapters:
+  langgraph_graph_nodes_hook: true   # Canonical (GRAPH_DOMAIN + graph_nodes/registry.py)
+  langgraph_plugin: false            # DEPRECATED
+  sacred_orders_rules: true
+  neural_engine_contracts: false
+
+# =============================================================================
+# COGNITIVE MODULES (Contract §14 — OPTIONAL)
+# =============================================================================
+# Declare which cognitive modules the vertical installs and how it configures them.
+# Each module must be listed in dependencies of the vertical's .vit manifest.
+# Install:  vit install service-neural-engine service-veritas-engine service-horizon-engine
+# Contracts: vitruvyan_core.contracts.{neural_engine,veritas_engine,horizon_engine}
+# See: vitruvyan_core/contracts/cognitive_module.py (IDataProvider, IProfileStrategy, IFilterStrategy)
+
+cognitive_modules:
+  neural_engine:
+    enabled: false                    # SHOULD: true when domain has ranked entity scoring
+    provider: ""                      # FQCN of IDataProvider implementation
+    strategy: ""                      # FQCN of IProfileStrategy implementation
+    filter: null                      # FQCN of IFilterStrategy implementation (optional)
+    package: "service-neural-engine"  # .vit package name
+
+  veritas_engine:
+    enabled: false                    # SHOULD: true when signal quality validation is needed
+    provider: ""                      # FQCN of IDataProvider implementation (consumes NE output)
+    strategy: ""                      # FQCN of IProfileStrategy for quality thresholds
+    filter: null                      # FQCN of IFilterStrategy (optional, e.g. regime filter)
+    package: "service-veritas-engine"
+
+  horizon_engine:
+    enabled: false                    # MAY: true when Pareto optimisation over config space needed
+    provider: ""                      # FQCN of IDataProvider (consumes Veritas/NE output)
+    strategy: ""                      # FQCN of IProfileStrategy for doctrine selection
+    filter: null                      # FQCN of IFilterStrategy for design space pruning
+    package: "service-horizon-engine"
+
+contracts_used:
+  - contracts.GraphPlugin
+  - contracts.BaseParser
+  - contracts.IDataProvider
+  - contracts.IScoringStrategy

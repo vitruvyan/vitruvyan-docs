@@ -1,0 +1,18 @@
+{
+  "title": "Vitruvyan Core",
+  "pages": [
+    "index",
+    "foundational",
+    "installation",
+    "internal",
+    "architecture",
+    "contracts",
+    "knowledge_base",
+    "infrastructure",
+    "codex",
+    "changelog",
+    "testing",
+    "services",
+    "planning"
+  ]
+}

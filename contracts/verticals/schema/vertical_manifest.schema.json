@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vitruvyan.com/contracts/vertical_manifest.schema.json",
+  "title": "Vertical Manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "contract_version",
+    "domain_name",
+    "domain_version",
+    "status",
+    "ownership",
+    "required_components",
+    "adapters",
+    "compliance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "contract_version": {"type": "string"},
+    "domain_name": {"type": "string", "minLength": 1},
+    "domain_version": {"type": "string"},
+    "status": {"type": "string", "enum": ["draft", "active", "deprecated"]},
+    "ownership": {
+      "type": "object",
+      "required": ["team", "tech_lead", "contact"],
+      "properties": {
+        "team": {"type": "string"},
+        "tech_lead": {"type": "string"},
+        "contact": {"type": "string"}
+      }
+    },
+    "required_components": {"type": "object"},
+    "optional_components": {"type": "object"},
+    "adapters": {"type": "object"},
+    "cognitive_modules": {
+      "type": "object",
+      "description": "Cognitive modules enabled for this vertical. Each key is a module name (neural_engine, veritas_engine, horizon_engine). Absent key = module not used.",
+      "properties": {
+        "neural_engine": { "$ref": "#/$defs/CognitiveModuleConfig" },
+        "veritas_engine": { "$ref": "#/$defs/CognitiveModuleConfig" },
+        "horizon_engine": { "$ref": "#/$defs/CognitiveModuleConfig" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/CognitiveModuleConfig" }
+    },
+    "contracts_used": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "compliance": {
+      "type": "object",
+      "required": ["checklist_version", "status"],
+      "properties": {
+        "checklist_version": {"type": "string"},
+        "status": {"type": "string", "enum": ["pending", "pass", "fail"]},
+        "last_verified_utc": {"type": ["string", "null"]}
+      }
+    },
+    "derogations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "reason", "owner", "expiry_utc", "remediation_plan"],
+        "properties": {
+          "id": {"type": "string"},
+          "reason": {"type": "string"},
+          "owner": {"type": "string"},
+          "expiry_utc": {"type": "string"},
+          "remediation_plan": {"type": "string"}
+        }
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "CognitiveModuleConfig": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether this module is active for this vertical."
+        },
+        "provider": {
+          "type": "string",
+          "description": "Fully-qualified Python class implementing IDataProvider for this module."
+        },
+        "strategy": {
+          "type": "string",
+          "description": "Fully-qualified Python class implementing IProfileStrategy (or IScoringStrategy) for this module."
+        },
+        "filter": {
+          "type": ["string", "null"],
+          "description": "Fully-qualified Python class implementing IFilterStrategy. Null if no filter."
+        },
+        "package": {
+          "type": "string",
+          "description": "Name of the .vit package providing this module engine (e.g. service-neural-engine)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
