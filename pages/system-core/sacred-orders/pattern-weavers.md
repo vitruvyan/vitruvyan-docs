@@ -1,1 +1,324 @@
-../../../internal/orders/PATTERN_WEAVERS.md
+# Pattern Weavers
+
+> **Last Updated**: March 17, 2026
+
+<p class="kb-subtitle">Semantic contextualization: taxonomy weaving, concept extraction, and LLM semantic compilation.</p>
+
+## What it does
+
+- **Weaves queries into taxonomies**: resolves free text into structured categories (concepts, sectors, regions, …)
+- **Extracts concepts**: returns deduped concept names for downstream pipelines
+- **Provides fallback**: keyword matching when embedding/Qdrant semantic search is unavailable
+
+- **Epistemic layer**: Reason (Semantic)
+- **Mandate**: resolve unstructured queries into **domain taxonomies** (concepts, sectors, regions, intents, …)
+- **Outputs**: `WeaveResult` with `PatternMatch[]` + extracted concepts
+
+## Charter (mandate + non-goals)
+
+### Mandate
+
+Pattern Weavers exists to turn “language” into **structured context**:
+
+- validate a weave request (`query_text`, optional filters)
+- preprocess text for embedding (light normalization)
+- convert similarity search results into `PatternMatch` objects
+- extract *concept names* (deduped) for downstream Sacred Orders
+
+### Non-goals
+
+- **No I/O in LIVELLO 1**: no HTTP calls, no Qdrant queries, no persistence, no StreamBus publishing
+- **No risk scoring**: Pattern Weavers does not compute “risk”, “sentiment”, “advice”, or domain judgment
+- **No domain hardcoding**: taxonomy content is injected/configured (YAML/env), not embedded in core logic
+
+## Interfaces
+
+- **HTTP (LIVELLO 2)**: `services/api_pattern_weavers/` exposes FastAPI endpoints (`/weave`, `/keyword-match`, `/health`, …)
+- **Cognitive Bus (LIVELLO 2)**: optional event consumption/publication via `BusAdapter` + `StreamBus`
+- **Taxonomy (config)**: `PatternConfig.taxonomy` loaded from YAML at deploy time
+
+## Event contract (Cognitive Bus)
+
+Defined in `vitruvyan_core/core/cognitive/pattern_weavers/events/__init__.py`:
+
+- `pattern.weave.request`
+- `pattern.weave.response`
+- `pattern.weave.error`
+- `pattern.taxonomy.updated` / `pattern.taxonomy.refresh`
+- `pattern.health.check` / `pattern.health.status`
+
+## Code map
+
+- **LIVELLO 1 (pure, no I/O)**: `vitruvyan_core/core/cognitive/pattern_weavers/`
+  - Consumers: `consumers/weaver.py`, `consumers/keyword_matcher.py`
+  - Domain objects + config: `domain/entities.py`, `domain/config.py`
+  - Events: `events/__init__.py`
+- **LIVELLO 2 (service + adapters + I/O)**: `services/api_pattern_weavers/`
+  - HTTP routes: `api/routes.py`
+  - Bus orchestration: `adapters/bus_adapter.py`
+  - Embedding/Qdrant/Persistence adapters: `adapters/embedding.py`, `adapters/persistence.py`
+
+---
+
+## Pipeline (happy path)
+
+1. HTTP `POST /weave` receives a `WeaveRequest`
+2. Embedding adapter calls the embedding service (Babel Gardens) to obtain `query_vector`
+3. Persistence adapter queries Qdrant for similarity results
+4. LIVELLO 1 `WeaverConsumer.process(mode="process_results")` converts raw results → `WeaveResult`
+5. Service returns the response and optionally logs/publishes events
+
+---
+
+## Agents / Consumers (LIVELLO 1)
+
+### `WeaverConsumer` — semantic weaving (results → matches)
+
+- File: `vitruvyan_core/core/cognitive/pattern_weavers/consumers/weaver.py`
+- Responsibilities:
+  - `validate_request` mode:
+    - validates `query_text` and length (`PatternConfig.max_query_length`)
+    - builds a `WeaveRequest` and returns `preprocessed_query`
+  - `process_results` mode:
+    - filters results below `similarity_threshold`
+    - converts each Qdrant payload → `PatternMatch(category, name, score, match_type=semantic, metadata)`
+    - extracts unique concept names into `extracted_concepts`
+
+**Input (validate_request)**:
+
+- `query_text: str` (required)
+- optional: `user_id`, `language`, `top_k`, `similarity_threshold`, `categories`, `correlation_id`
+
+**Input (process_results)**:
+
+- `similarity_results: list[dict]` (required)
+- optional: `similarity_threshold`
+
+**Output**:
+
+- `data["request"] = WeaveRequest` *(validate_request)*
+- `data["preprocessed_query"] = str` *(validate_request)*
+- `data["result"] = WeaveResult` *(process_results)*
+
+### `KeywordMatcherConsumer` — taxonomy keyword matching (fallback)
+
+- File: `vitruvyan_core/core/cognitive/pattern_weavers/consumers/keyword_matcher.py`
+- Purpose:
+  - fast fallback when embedding/Qdrant is unavailable
+  - matches tokenized query text against `PatternConfig.taxonomy`
+
+**How it works**:
+
+- tokenizes query to a `set[str]` (lowercase, punctuation stripped)
+- for each `category_type` in taxonomy:
+  - intersects query tokens with each category’s keyword set
+  - scores as `match_count / total_keywords` (capped at 1.0)
+- returns `PatternMatch(match_type=keyword)` with `matched_keywords` in metadata
+
+---
+
+## Service (LIVELLO 2) — API surface
+
+Service location: `services/api_pattern_weavers/`.
+
+### Endpoints (as implemented)
+
+- `GET /health` — dependency health (Postgres, Qdrant, Redis, embedding service)
+- `POST /weave` — embedding + Qdrant similarity + semantic weaving
+- `POST /keyword-match` — keyword-only fallback (no embedding required)
+- `GET /taxonomy/stats` — taxonomy counts/categories (from domain config)
+- `GET /metrics` — Prometheus
+
+> Ports note: the service code has multiple defaults (`PATTERN_PORT` vs `start.sh --port 8017`). Treat the **Docker compose mapping** as source-of-truth in deployment.
+
+## Domain specialization (finance pilot)
+
+Pattern Weavers stays domain-agnostic: finance specialization lives in the **taxonomy file** (YAML, v2) and in **semantic plugins** (Python ABC, v3), plus downstream consumers.
+
+Finance examples:
+
+- taxonomy categories: sectors (GICS), regions, instruments, risk terms, macro terms
+- **(v3)** `FinanceSemanticPlugin`: 11 entity types (ticker, sector, index, currency, etc.), multilingual gate keywords, ticker normalization
+- extracted concepts feed:
+  - Neural Engine feature generation
+  - Orthodoxy Wardens compliance checks (guardrails)
+  - Vault Keepers archival of weave results
+
+---
+
+## v3 — LLM Semantic Compilation (February 25, 2026)
+
+### Overview
+
+v3 replaces the two-stage embedding pipeline with a **single LLM call** (`LLMAgent.complete_json()`) that produces a strict-schema `OntologyPayload`. Enabled via feature flag `PATTERN_WEAVERS_V3=1`.
+
+### Architecture
+
+| Layer | Component | File | Purpose |
+|-------|-----------|------|---------|
+| Contract | `OntologyPayload`, `ISemanticPlugin` | `contracts/pattern_weavers.py` | Output schema + plugin ABC |
+| LIVELLO 1 | `LLMCompilerConsumer` | `consumers/llm_compiler.py` | Pure JSON→OntologyPayload parsing |
+| LIVELLO 1 | `SemanticPluginRegistry` | `governance/semantic_plugin.py` | Domain plugin registration |
+| LIVELLO 2 | `LLMCompilerAdapter` | `adapters/llm_compiler.py` | LLM orchestration + validation |
+| LIVELLO 2 | `/compile` endpoint | `api/routes.py` | HTTP surface (feature-flagged) |
+| Graph | `pw_compile_node` | `node/pw_compile_node.py` | LangGraph integration |
+
+### OntologyPayload (strict schema)
+
+All models use `extra="forbid"` — LLM hallucinations rejected at parse time.
+
+Key fields: `gate` (DomainGate: verdict + confidence + reasoning), `entities` (List[OntologyEntity]: raw + canonical + type), `intent_hint`, `topics`, `sentiment_hint`, `temporal_context`, `language`, `complexity`.
+
+### Plugin System (ISemanticPlugin)
+
+Domains inject behavior via Python ABC:
+- `system_prompt()` → domain-specific LLM instructions
+- `gate_keywords()` → fast-path embedding detection
+- `entity_types()` / `intent_vocabulary()` → domain schema
+- `validate_payload()` → post-processing (e.g., ticker uppercase)
+
+Built-in: `GenericSemanticPlugin` (fallback). Finance: `FinanceSemanticPlugin`.
+
+### Feature Flag
+
+| Env Var | Value | Behavior |
+|---------|-------|----------|
+| `PATTERN_WEAVERS_V3` | `0` (default) | v2 embedding pipeline |
+| `PATTERN_WEAVERS_V3` | `1` | v3 LLM compilation |
+
+### Graph Node
+
+`pw_compile_node` sets `ontology_payload` (v3) AND backward-compat fields (`weaver_context`, `matched_concepts`, `semantic_context`, `weave_confidence`). Downstream nodes work without changes.
+
+### Tests
+
+- 25 core tests (`tests/test_pattern_weavers_v3.py`): schema, parsing, registry
+- 12 finance tests (`tests/test_finance_semantic_plugin.py`): plugin compliance, E2E simulation
+- All 37 pass ✅
+
+---
+
+## Comprehension Engine v3 (February 25, 2026)
+
+With `BABEL_COMPREHENSION_V3=1`, Pattern Weavers' ontology resolution is **unified** with Babel Gardens' semantic extraction in the Comprehension Engine — a single LLM call that produces both `OntologyPayload` (PW) and `SemanticPayload` (BG).
+
+### Relationship to PW v3
+
+| | PW v3 (`PATTERN_WEAVERS_V3=1`) | Comprehension Engine (`BABEL_COMPREHENSION_V3=1`) |
+|-|---|---------|
+| **LLM call** | Ontology only | Ontology + Semantics (single call) |
+| **Output** | `OntologyPayload` | `ComprehensionResult` (ontology + semantics) |
+| **Plugin** | `ISemanticPlugin` | `IComprehensionPlugin` (extends ontology + adds semantics) |
+| **Graph node** | `pw_compile_node` | `comprehension_node` (replaces PW + emotion nodes) |
+| **Supersedes** | v2 embedding pipeline | PW v3 + separate emotion detection |
+
+PW v3's `ISemanticPlugin` and `OntologyPayload` remain the foundation — the Comprehension Engine wraps them with semantic extraction, not replaces them.
+
+### What PW owns in Comprehension Engine
+- `OntologyPayload` schema (gate, entities, intent, topics)
+- Ontology section of the LLM prompt (via `IComprehensionPlugin.get_ontology_prompt_section()`)
+- Entity type vocabulary and gate rules
+- Post-processing validation (e.g., ticker normalization)
+
+### What PW does NOT own
+- `SemanticPayload` — belongs to Babel Gardens
+- Signal fusion (L2/L3) — belongs to Babel Gardens
+- Sentiment/emotion/linguistic analysis — belongs to Babel Gardens
+
+For the full architectural rationale, see [Semantic & Ontology Architecture](../architecture/SEMANTIC_ONTOLOGY_ARCHITECTURE.md).
+
+---
+
+## v3.1 — Ontological Relations (March 17, 2026)
+
+### Overview
+
+v3.1 introduces **first-class entity relations** — typed, directed edges between `OntologyEntity` instances. This is the foundational evolution from semantic classifier to **ontology engine**.
+
+### Contract additions (`contracts/pattern_weavers.py` v3.1.0)
+
+| Component | Type | Description |
+|-----------|------|-------------|
+| `CORE_RELATION_TYPES` | `Dict[str, Dict[str, str]]` | Canonical vocabulary: 7 types with direction + description |
+| `EntityRelation` | `BaseModel` (extra=forbid) | `target`, `relation_type`, `confidence`, `source` |
+| `OntologyEntity.relations` | `List[EntityRelation]` | Default `[]`, carries typed edges to other entities |
+
+### Canonical relation vocabulary (v1)
+
+| Type | Direction | Description |
+|------|-----------|-------------|
+| `owns` | directed | Ownership, subsidiary, parent |
+| `part_of` | directed | Organizational or conceptual membership |
+| `competes_with` | bidirectional | Direct competitor or alternative |
+| `depends_on` | directed | Supply chain, operational, or logical dependency |
+| `affects` | directed | Causal or consequential influence |
+| `represents` | directed | Cross-source identity link (source record → canonical entity) |
+| `related_to` | weak | General association (low specificity fallback) |
+
+Domain plugins MAY extend with domain-specific types.
+
+### Data flow — two provenance paths
+
+**Path 1: LLM comprehension** (online, per-query)
+```
+User query → Comprehension Engine (LLM call)
+  → OntologyEntity.relations (source="llm")
+  → comprehension_consumer preserves relations
+  → CAN node injects into narrative context
+```
+
+**Path 2: Codex ingestion** (offline, bulk)
+```
+Oculus Prime → Evidence Pack
+  → Codex Hunters (Track → Restore → Bind)
+  → BoundEntity.relations (source="codex")
+  → BusAdapter → PersistenceAdapter.store_entity_relations()
+  → PostgreSQL entity_relations table (UPSERT)
+```
+
+**Path 3: Entity resolver enrichment** (online, per-query)
+```
+entity_resolver_node → EntityResolverRegistry.resolve()
+  → _relation_enricher callback (queries entity_relations)
+  → state["entity_known_relations"] injected
+  → CAN node reads and renders in narrative
+```
+
+### Persistence schema
+
+```sql
+CREATE TABLE entity_relations (
+    id              BIGSERIAL PRIMARY KEY,
+    source_entity   VARCHAR(255) NOT NULL,
+    target_entity   VARCHAR(255) NOT NULL,
+    relation_type   VARCHAR(64) NOT NULL,
+    confidence      REAL DEFAULT 0.5 CHECK (0.0 <= confidence <= 1.0),
+    source          VARCHAR(64) DEFAULT 'llm',
+    context         TEXT NULL,
+    metadata        JSONB DEFAULT '{}',
+    UNIQUE (source_entity, target_entity, relation_type)
+);
+```
+
+### Key design constraints
+
+1. **Grounding, not reasoning**: relations record structural facts ("Alphabet owns Google"), not inferences
+2. **Anti-hallucination**: closed vocabulary, confidence >= 0.7, `extra="forbid"` on Pydantic models
+3. **No graph traversal**: flat relational storage (Phase 1). Multi-hop CTE queries are Phase 2
+4. **No premature inference**: system NEVER derives conclusions from relations alone — they enrich context for LLM reasoning
+5. **Oculus boundary respected**: Oculus Prime (Perception) preserves source metadata but does NOT extract relations. Codex Hunters (Knowledge) handles relation extraction from structured FK data
+
+### Modified files
+
+| File | Layer | Change |
+|------|-------|--------|
+| `contracts/pattern_weavers.py` | Contract | `CORE_RELATION_TYPES`, `EntityRelation`, `OntologyEntity.relations` |
+| `babel_gardens/consumers/comprehension_consumer.py` | LIVELLO 1 | Preserves `relations` in `_normalize_entity()` |
+| `pattern_weavers/consumers/llm_compiler.py` | LIVELLO 1 | Ensures `relations: []` default before validate |
+| `babel_gardens/governance/signal_registry.py` | LIVELLO 1 | Anti-hallucination prompt with closed vocabulary |
+| `orchestration/langgraph/node/can_node.py` | Orchestration | Reads + renders relations in narrative context |
+| `orchestration/entity_resolver_registry.py` | Orchestration | `set_relation_enricher()` + `_enrich_relations()` |
+| `codex_hunters/domain/entities.py` | LIVELLO 1 | `EntityRelationRef`, `BoundEntity.relations` |
+| `api_codex_hunters/adapters/persistence.py` | LIVELLO 2 | `store_entity_relations()`, `fetch_entity_relations()` |
+| `api_codex_hunters/adapters/bus_adapter.py` | LIVELLO 2 | Wires relation persistence in `process_bind()` |
+| `008_create_entity_relations_table.sql` | Infrastructure | PostgreSQL schema |
