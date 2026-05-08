@@ -1,0 +1,7 @@
+{
+  "embedding-api": "Embedding API",
+  "conclave-api": "Synaptic Conclave API",
+  "neural-engine-api": "Neural Engine API",
+  "veritas-engine-api": "Veritas Engine API",
+  "horizon-engine-api": "Horizon Engine API"
+}

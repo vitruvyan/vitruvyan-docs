@@ -1,0 +1,1 @@
+../../installation/HEALTH_CHECKS.md

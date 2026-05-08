@@ -1,0 +1,1 @@
+../../architecture/SEMANTIC_ONTOLOGY_ARCHITECTURE.md

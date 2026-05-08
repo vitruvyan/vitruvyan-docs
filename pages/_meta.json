@@ -1,0 +1,13 @@
+{
+  "index": {
+    "title": "Home",
+    "display": "hidden"
+  },
+  "getting-started": "Getting Started",
+  "installation": "Installation",
+  "system-core": "System Core",
+  "architecture": "Architecture",
+  "services": "Services",
+  "web-ui": "Web UI",
+  "infrastructure": "Infrastructure"
+}
