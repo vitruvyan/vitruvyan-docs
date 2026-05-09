@@ -45,15 +45,12 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
         ctx.close()
 
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
-        const form = new FormData()
-        form.append('file', blob, 'audio.webm')
-        form.append('model', 'whisper-1')
 
         try {
-          const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+          const res = await fetch('/api/kb-stt', {
             method: 'POST',
-            headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_KEY || ''}` },
-            body: form,
+            headers: { 'Content-Type': 'audio/webm' },
+            body: blob,
           })
           const data = await res.json()
           if (data.text) onTranscript(data.text)
