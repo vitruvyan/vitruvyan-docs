@@ -44,12 +44,13 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
         stream.getTracks().forEach(t => t.stop())
         ctx.close()
 
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        const mimeType = recorder.mimeType || 'audio/webm'
+        const blob = new Blob(chunksRef.current, { type: mimeType })
 
         try {
           const res = await fetch('/api/kb-stt', {
             method: 'POST',
-            headers: { 'Content-Type': 'audio/webm' },
+            headers: { 'Content-Type': mimeType },
             body: blob,
           })
           const data = await res.json()
