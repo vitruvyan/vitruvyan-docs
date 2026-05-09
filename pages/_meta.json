@@ -3,8 +3,6 @@
     "title": "Home",
     "display": "hidden",
     "theme": {
-      "layout": "full",
-      "sidebar": false,
       "toc": false,
       "breadcrumb": false,
       "footer": false,
