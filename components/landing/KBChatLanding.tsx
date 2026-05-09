@@ -26,11 +26,12 @@ export function KBChatLanding() {
   const [pendingTranscript, setPendingTranscript] = useState('')
   const [isClient, setIsClient] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const voiceActiveRef = useRef(false)
+  const lastSpokenIdRef = useRef('')
   const hasMessages = messages.length > 0
 
   useEffect(() => {
     setIsClient(true)
-    // Add class to html so CSS can lock scroll only on landing
     document.documentElement.classList.add('kb-landing')
     return () => document.documentElement.classList.remove('kb-landing')
   }, [])
@@ -40,12 +41,32 @@ export function KBChatLanding() {
     setAudioLevel,
   )
 
+  // Voice input → mark as voice mode, then send
   useEffect(() => {
     if (pendingTranscript) {
+      voiceActiveRef.current = true
       sendMessage(pendingTranscript)
       setPendingTranscript('')
     }
   }, [pendingTranscript, sendMessage])
+
+  // Auto-speak completed AI response when triggered by voice
+  useEffect(() => {
+    if (!voiceActiveRef.current) return
+    const last = messages[messages.length - 1]
+    if (
+      last?.sender === 'ai' &&
+      last.isComplete &&
+      !last.isStreaming &&
+      !last.error &&
+      last.text &&
+      last.id !== lastSpokenIdRef.current
+    ) {
+      lastSpokenIdRef.current = last.id
+      voiceActiveRef.current = false
+      speakText(last.text, setAudioLevel)
+    }
+  }, [messages, speakText])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
