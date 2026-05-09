@@ -60,35 +60,27 @@ html.dark .kb-gaussian-canvas {
 }
 
 /* ── Nextra chrome above canvas ──────────────────────────────────────────
-   All positioned chrome must stack above canvas (z-index 0) with solid
-   backgrounds so blend-mode cannot bleed through them.
-   article.nextra-content gets z-index but NO background — canvas remains
-   visible through the page while text renders above it.
+   Canvas is position:fixed z-index:0. Chrome elements with z-index > 0
+   paint AFTER the canvas in the compositor, so canvas blend-mode never
+   affects them. No explicit background needed — Nextra handles theming.
 ─────────────────────────────────────────────────────────────────────────── */
 .nextra-nav-container {
   position: relative;
   z-index: 20;
-  isolation: isolate;
-  background: var(--nextra-bg, #fff);
 }
 
 .nextra-sidebar-container {
   position: relative;
   z-index: 15;
-  isolation: isolate;
-  background: var(--nextra-bg, #fff);
 }
 
 .nextra-toc {
   position: relative;
   z-index: 15;
-  isolation: isolate;
-  background: var(--nextra-bg, #fff);
 }
 
-/* Content area above canvas — no background so canvas shows through gaps */
+/* Content text above canvas so it is never blended over */
 article.nextra-content {
   position: relative;
   z-index: 10;
-  isolation: isolate;
 }
