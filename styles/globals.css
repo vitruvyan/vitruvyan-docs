@@ -1,0 +1,41 @@
+/* ── Vitruvyan KB — Typography alignment with corporate UI ────────────────
+   Inter           → body, headings, sidebar, nav  (matches frontier/ui)
+   Libre Baskerville → lead / subtitle text         (matches frontier/ui)
+   Inconsolata     → code blocks                   (retained from MkDocs)
+─────────────────────────────────────────────────────────────────────────── */
+
+/* Font variables injected by next/font in _app.tsx */
+body,
+.nextra-nav-container,
+.nextra-sidebar-container,
+.nextra-toc,
+.nextra-content p,
+.nextra-content li,
+.nextra-content td,
+.nextra-content th {
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+.nextra-content h1,
+.nextra-content h2,
+.nextra-content h3,
+.nextra-content h4,
+.nextra-content h5,
+.nextra-content h6 {
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Lead paragraph — Libre Baskerville, matching .font-body-serif */
+.nextra-content h2 + p,
+.nextra-content .lead {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+/* Code blocks — Inconsolata */
+.nextra-content pre,
+.nextra-content code,
+.nextra-content kbd,
+.nextra-content samp {
+  font-family: "Inconsolata", "JetBrains Mono", ui-monospace, monospace;
+}
