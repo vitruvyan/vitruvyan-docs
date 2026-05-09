@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
+export const config = { maxDuration: 30 }
+
 const KB_API = process.env.KB_API_URL || 'http://localhost:9020'
 const KB_API_KEY = process.env.KB_API_KEY || ''
 
