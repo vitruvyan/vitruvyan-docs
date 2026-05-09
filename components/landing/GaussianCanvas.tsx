@@ -107,6 +107,7 @@ export default function GaussianCanvas({ audioLevel = 0 }: { audioLevel?: number
   return (
     <canvas
       ref={canvasRef}
+      className="kb-gaussian-canvas"
       style={{
         position: 'fixed',
         inset: 0,
@@ -114,10 +115,6 @@ export default function GaussianCanvas({ audioLevel = 0 }: { audioLevel?: number
         height: '100vh',
         pointerEvents: 'none',
         zIndex: 0,
-        // multiply: white canvas areas become transparent on light bg
-        // screen: lines add brightness on dark bg
-        mixBlendMode: typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-          ? 'screen' : 'multiply',
       }}
     />
   )

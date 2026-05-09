@@ -48,15 +48,28 @@ html.kb-landing {
   overflow: hidden;
 }
 
+/* ── Gaussian canvas blend mode (CSS-driven, theme-reactive) ─────────────
+   Canvas is position:fixed z-index:0 — multiply in light, screen in dark.
+   Using CSS so theme switches update blend without React remount.
+─────────────────────────────────────────────────────────────────────────── */
+.kb-gaussian-canvas {
+  mix-blend-mode: multiply;
+}
+html.dark .kb-gaussian-canvas {
+  mix-blend-mode: screen;
+}
+
 /* ── Nextra chrome above canvas ──────────────────────────────────────────
-   The gaussian canvas is position:fixed, z-index:0.
-   Sidebar/header/TOC must stack ABOVE it (z-index > 0) with a solid
-   background so the mix-blend-mode canvas cannot bleed through them.
+   All positioned chrome must stack above canvas (z-index 0) with solid
+   backgrounds so blend-mode cannot bleed through them.
+   article.nextra-content gets z-index but NO background — canvas remains
+   visible through the page while text renders above it.
 ─────────────────────────────────────────────────────────────────────────── */
 .nextra-nav-container {
   position: relative;
   z-index: 20;
   isolation: isolate;
+  background: var(--nextra-bg, #fff);
 }
 
 .nextra-sidebar-container {
@@ -71,4 +84,11 @@ html.kb-landing {
   z-index: 15;
   isolation: isolate;
   background: var(--nextra-bg, #fff);
+}
+
+/* Content area above canvas — no background so canvas shows through gaps */
+article.nextra-content {
+  position: relative;
+  z-index: 10;
+  isolation: isolate;
 }
