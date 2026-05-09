@@ -24,10 +24,16 @@ export function useChat() {
     }
 
     try {
+      // Build conversation history for context continuity (last 6 turns)
+      const history = messages
+        .filter(m => m.isComplete && !m.error && m.text)
+        .slice(-6)
+        .map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text }))
+
       const res = await fetch('/api/kb-ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: text.trim() }),
+        body: JSON.stringify({ query: text.trim(), history }),
       })
       const data = await res.json()
 
@@ -54,7 +60,7 @@ export function useChat() {
     } finally {
       setIsTyping(false)
     }
-  }, [isTyping, addUserMessage, setIsTyping, addAIPlaceholder, updateLastAI])
+  }, [messages, isTyping, addUserMessage, setIsTyping, addAIPlaceholder, updateLastAI])
 
   return { messages, isProcessing: isTyping, sendMessage }
 }

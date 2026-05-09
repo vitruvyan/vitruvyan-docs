@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { query } = req.body
+  const { query, history } = req.body
   if (!query?.trim()) {
     return res.status(400).json({ error: 'query is required' })
   }
@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const upstream = await fetch(`${KB_API}/kb/ask`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ query: query.trim() }),
+      body: JSON.stringify({ query: query.trim(), history: history || [] }),
     })
 
     const data = await upstream.json()
