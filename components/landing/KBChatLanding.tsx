@@ -30,9 +30,9 @@ export function KBChatLanding() {
 
   useEffect(() => {
     setIsClient(true)
-    // Prevent page scroll — chat is self-contained in viewport
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    // Add class to html so CSS can lock scroll only on landing
+    document.documentElement.classList.add('kb-landing')
+    return () => document.documentElement.classList.remove('kb-landing')
   }, [])
 
   const { isRecording, startRecording, stopRecording, speakText } = useVoice(

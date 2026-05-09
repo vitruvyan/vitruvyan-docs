@@ -3,6 +3,7 @@
 import { useTheme } from 'nextra-theme-docs'
 import type { Message } from './hooks/useMessages'
 import { SoundWave } from './SoundWave'
+import { MarkdownMessage } from './MarkdownMessage'
 import styles from './chat.module.css'
 
 interface Props {
@@ -59,8 +60,10 @@ export function ChatMessage({ message, onRelatedClick, speakingLevel = 0 }: Prop
   // Complete AI response
   return (
     <div className={styles.aiMsg}>
-      {/* Answer text */}
-      <p className={styles.answerText}>{message.text}</p>
+      {/* Answer text — rendered as Markdown with Mermaid support */}
+      <div className={styles.answerBlock}>
+        <MarkdownMessage content={message.text} />
+      </div>
 
       {/* Sound wave when TTS is playing */}
       {speakingLevel > 0 && (

@@ -39,3 +39,23 @@ body,
 .nextra-content samp {
   font-family: "Inconsolata", "JetBrains Mono", ui-monospace, monospace;
 }
+
+/* ── Landing page: lock scroll via class on <html> ──────────────────────
+   Only active when KBChatLanding mounts (adds .kb-landing to <html>).
+   Targets the Nextra main content scroller, not the sidebar.
+─────────────────────────────────────────────────────────────────────────── */
+html.kb-landing {
+  overflow: hidden;
+}
+
+/* ── Isolate Nextra chrome from canvas blend modes ──────────────────────
+   The gaussian canvas uses mix-blend-mode: multiply/screen.
+   isolation: isolate creates a new stacking context so the blend mode
+   cannot composite against the sidebar, header, or TOC.
+─────────────────────────────────────────────────────────────────────────── */
+.nextra-nav-container,
+.nextra-sidebar-container,
+.nextra-toc {
+  isolation: isolate;
+  position: relative;
+}
