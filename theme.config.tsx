@@ -1,12 +1,46 @@
 import React from 'react'
+import { useTheme } from 'nextra-theme-docs'
 import { DocsThemeConfig } from 'nextra-theme-docs'
 
+function Logo() {
+  const { resolvedTheme } = useTheme()
+  return (
+    <img
+      src="/vit_logo_header.svg"
+      alt="Vitruvyan"
+      height={28}
+      style={{
+        height: 28,
+        width: 'auto',
+        filter: resolvedTheme === 'dark' ? 'invert(1) brightness(1.1)' : 'none',
+        transition: 'filter 0.2s',
+      }}
+    />
+  )
+}
+
 const config: DocsThemeConfig = {
-  logo: (
-    <span style={{ fontWeight: 700, letterSpacing: '-0.03em', fontFamily: 'Inconsolata, monospace' }}>
-      Vitruvyan OS
-    </span>
-  ),
+  logo: <Logo />,
+  navbar: {
+    extraContent: (
+      <a
+        href="/"
+        style={{
+          fontSize: '0.8rem',
+          fontWeight: 500,
+          padding: '0.3rem 0.85rem',
+          borderRadius: '999px',
+          border: '1px solid rgba(109,40,217,0.35)',
+          color: '#7c3aed',
+          textDecoration: 'none',
+          whiteSpace: 'nowrap',
+          transition: 'background 0.15s',
+        }}
+      >
+        Ask AI
+      </a>
+    ),
+  },
   docsRepositoryBase: 'https://github.com/vitruvyan-team/vitruvyan-core-docs/tree/main',
   footer: {
     text: 'Copyright © 2026 Vitruvyan Team',

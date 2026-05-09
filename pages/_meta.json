@@ -1,7 +1,16 @@
 {
   "index": {
     "title": "Home",
-    "display": "hidden"
+    "display": "hidden",
+    "theme": {
+      "layout": "full",
+      "sidebar": false,
+      "toc": false,
+      "breadcrumb": false,
+      "footer": false,
+      "pagination": false,
+      "timestamp": false
+    }
   },
   "getting-started": "Getting Started",
   "installation": "Installation",

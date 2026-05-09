@@ -1,0 +1,88 @@
+/* ── Full-screen container ───────────────────────────────────────────── */
+.landing {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Dark mode canvas tint ───────────────────────────────────────────── */
+.canvasDark {
+  background: #0f0f12;
+}
+
+/* ── Hero section ────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 1.5rem 1.5rem;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  height: 36px;
+  width: auto;
+  margin-bottom: 0.5rem;
+}
+
+.headline {
+  font-size: clamp(1rem, 2.5vw, 1.15rem);
+  opacity: 0.55;
+  font-family: var(--font-inter, sans-serif);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  max-width: 540px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.subline {
+  font-size: 0.78rem;
+  opacity: 0.35;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* ── Chat panel ──────────────────────────────────────────────────────── */
+.chatPanel {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  /* Glass card */
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 1.5rem;
+  margin-bottom: 2rem;
+  min-height: 420px;
+  max-height: calc(100dvh - 220px);
+  overflow: hidden;
+  box-shadow:
+    0 4px 32px rgba(109, 40, 217, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .chatPanel {
+  background: rgba(15, 15, 18, 0.78);
+  border-color: rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 4px 32px rgba(109, 40, 217, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Canvas background dark mode ────────────────────────────────────── */
+:global(.dark) .landing {
+  background: #0f0f12;
+}
