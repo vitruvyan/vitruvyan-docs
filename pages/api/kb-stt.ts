@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const contentType = (req.headers['content-type'] || 'audio/webm').split(';')[0]
 
     const fd = new FormData()
-    fd.append('file', new Blob([audioBuffer], { type: contentType }), 'audio.webm')
+    fd.append('file', new Blob([new Uint8Array(audioBuffer)], { type: contentType }), 'audio.webm')
     fd.append('model', 'whisper-1')
 
     const upstream = await fetch('https://api.openai.com/v1/audio/transcriptions', {
