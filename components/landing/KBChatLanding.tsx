@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic'
 import { useChat } from '../chat/hooks/useChat'
 import { useVoice } from '../chat/hooks/useVoice'
 import { ChatMessage } from '../chat/ChatMessage'
+import { VoiceOrb } from '../chat/VoiceOrb'
+import type { OrbState } from '../chat/VoiceOrb'
 import styles from '../../styles/kb-chat.module.css'
 
 const ChatInputDynamic = dynamic(
@@ -36,7 +38,7 @@ export function KBChatLanding() {
     return () => document.documentElement.classList.remove('kb-landing')
   }, [])
 
-  const { isRecording, startRecording, stopRecording, speakText } = useVoice(
+  const { isRecording, isSpeaking, startRecording, stopRecording, speakText } = useVoice(
     setPendingTranscript,
     setAudioLevel,
   )
@@ -76,11 +78,22 @@ export function KBChatLanding() {
     isRecording ? stopRecording() : startRecording()
   }, [isRecording, startRecording, stopRecording])
 
+  const orbState: OrbState = isRecording
+    ? 'listening'
+    : isSpeaking
+    ? 'speaking'
+    : isProcessing
+    ? 'thinking'
+    : 'idle'
+
   return (
     <div className={hasMessages ? styles.pageActive : styles.page}>
 
       {/* Background animation — fixed behind everything */}
       <GaussianCanvas audioLevel={audioLevel} />
+
+      {/* Voice orb — fixed top-center, visible during any voice activity */}
+      <VoiceOrb state={orbState} level={audioLevel} />
 
       {/* ── EMPTY STATE: title + input + pills centered as one unit ── */}
       {!hasMessages && (
@@ -123,10 +136,7 @@ export function KBChatLanding() {
                 key={msg.id}
                 message={msg}
                 onRelatedClick={sendMessage}
-                speakingLevel={
-                  msg.sender === 'ai' && msg.isComplete && i === messages.length - 1
-                    ? audioLevel : 0
-                }
+                speakingLevel={0}
               />
             ))}
             <div ref={messagesEndRef} />
