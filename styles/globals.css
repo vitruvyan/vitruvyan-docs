@@ -48,14 +48,27 @@ html.kb-landing {
   overflow: hidden;
 }
 
-/* ── Isolate Nextra chrome from canvas blend modes ──────────────────────
-   The gaussian canvas uses mix-blend-mode: multiply/screen.
-   isolation: isolate creates a new stacking context so the blend mode
-   cannot composite against the sidebar, header, or TOC.
+/* ── Nextra chrome above canvas ──────────────────────────────────────────
+   The gaussian canvas is position:fixed, z-index:0.
+   Sidebar/header/TOC must stack ABOVE it (z-index > 0) with a solid
+   background so the mix-blend-mode canvas cannot bleed through them.
 ─────────────────────────────────────────────────────────────────────────── */
-.nextra-nav-container,
-.nextra-sidebar-container,
-.nextra-toc {
-  isolation: isolate;
+.nextra-nav-container {
   position: relative;
+  z-index: 20;
+  isolation: isolate;
+}
+
+.nextra-sidebar-container {
+  position: relative;
+  z-index: 15;
+  isolation: isolate;
+  background: var(--nextra-bg, #fff);
+}
+
+.nextra-toc {
+  position: relative;
+  z-index: 15;
+  isolation: isolate;
+  background: var(--nextra-bg, #fff);
 }
