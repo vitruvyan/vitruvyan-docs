@@ -46,6 +46,7 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
 
         const mimeType = recorder.mimeType || 'audio/webm'
         const blob = new Blob(chunksRef.current, { type: mimeType })
+        if (blob.size < 1000) return // too short, ignore
 
         try {
           const res = await fetch('/api/kb-stt', {
@@ -54,7 +55,7 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
             body: blob,
           })
           const data = await res.json()
-          if (data.text) onTranscript(data.text)
+          if (data.text?.trim()) onTranscript(data.text.trim())
         } catch {
           // STT failed silently
         }
@@ -62,6 +63,32 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
       mediaRef.current = recorder
       recorder.start()
       setIsRecording(true)
+
+      // Auto-stop on silence: 1.5s below threshold after initial speech detected
+      let speechDetected = false
+      let silenceStart = 0
+      const SILENCE_MS = 1500
+      const SPEECH_THRESHOLD = 0.04
+
+      const silenceBuf = new Uint8Array(analyser.frequencyBinCount)
+      const vadTick = () => {
+        if (!mediaRef.current || mediaRef.current.state !== 'recording') return
+        analyser.getByteFrequencyData(silenceBuf)
+        const level = silenceBuf.reduce((a, b) => a + b, 0) / silenceBuf.length / 255
+        if (level > SPEECH_THRESHOLD) {
+          speechDetected = true
+          silenceStart = 0
+        } else if (speechDetected) {
+          if (silenceStart === 0) silenceStart = Date.now()
+          if (Date.now() - silenceStart > SILENCE_MS) {
+            recorder.stop()
+            return
+          }
+        }
+        requestAnimationFrame(vadTick)
+      }
+      requestAnimationFrame(vadTick)
+
     } catch {
       // Microphone permission denied
     }
