@@ -28,7 +28,12 @@ export function KBChatLanding() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const hasMessages = messages.length > 0
 
-  useEffect(() => { setIsClient(true) }, [])
+  useEffect(() => {
+    setIsClient(true)
+    // Prevent page scroll — chat is self-contained in viewport
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
 
   const { isRecording, startRecording, stopRecording, speakText } = useVoice(
     setPendingTranscript,
@@ -60,9 +65,9 @@ export function KBChatLanding() {
       {!hasMessages && (
         <div className={styles.centerUnit}>
           <div className={styles.hero}>
-            <h1 className={styles.title}>Vitruvyan</h1>
+            <h1 className={styles.title}>Explore Vitruvyan</h1>
             <p className={styles.subtitle}>
-              Explore the platform through natural conversation
+              Discover the platform through natural conversation — or browse the docs on the left
             </p>
           </div>
 

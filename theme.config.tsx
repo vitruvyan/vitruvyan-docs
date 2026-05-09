@@ -5,17 +5,29 @@ import { DocsThemeConfig } from 'nextra-theme-docs'
 function Logo() {
   const { resolvedTheme } = useTheme()
   return (
-    <img
-      src="/vit_logo_header.svg"
-      alt="Vitruvyan"
-      height={28}
-      style={{
-        height: 28,
-        width: 'auto',
-        filter: resolvedTheme === 'dark' ? 'invert(1) brightness(1.1)' : 'none',
-        transition: 'filter 0.2s',
-      }}
-    />
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+      <img
+        src="/vit_logo_header.svg"
+        alt="Vitruvyan"
+        height={28}
+        style={{
+          height: 28,
+          width: 'auto',
+          filter: resolvedTheme === 'dark' ? 'invert(1) brightness(1.1)' : 'none',
+          transition: 'filter 0.2s',
+        }}
+      />
+      <span style={{
+        fontSize: '0.72rem',
+        fontWeight: 500,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        opacity: 0.45,
+        fontFamily: 'var(--font-inter, sans-serif)',
+      }}>
+        Knowledge Base
+      </span>
+    </div>
   )
 }
 

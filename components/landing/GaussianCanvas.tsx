@@ -29,13 +29,13 @@ export default function GaussianCanvas({ audioLevel = 0 }: { audioLevel?: number
   audioLevelRef.current = audioLevel
 
   const initAttractors = useCallback((w: number, h: number) => {
-    attractors.current = Array.from({ length: 4 }, (_, i) => ({
-      x: w * (0.2 + i * 0.2),
+    attractors.current = Array.from({ length: 7 }, (_, i) => ({
+      x: w * (0.1 + i * 0.13),
       y: h * 0.5,
       vx: 0,
       vy: 0,
-      phase: (i / 4) * Math.PI * 2,
-      speed: 0.4 + Math.random() * 0.3,
+      phase: (i / 7) * Math.PI * 2,
+      speed: 0.3 + Math.random() * 0.4,
     }))
   }, [])
 
@@ -79,8 +79,8 @@ export default function GaussianCanvas({ audioLevel = 0 }: { audioLevel?: number
           const x = att.x + gaussian() * sd
           const y = att.y + gaussian() * sd
 
-          // Color palette: violet (#7c3aed), teal (#0d9488), sage (#6b8f71) — works on light+dark
-          const hues = [262, 174, 152]
+          // 7-color palette: violet, teal, green, turquoise, sage, lavender, mint
+          const hues = [262, 174, 145, 186, 152, 266, 158]
           const hue = hues[i % hues.length]
           const alpha = (0.15 + Math.random() * 0.2) * (1 + al * 0.5)
 

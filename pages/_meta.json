@@ -5,7 +5,6 @@
     "theme": {
       "toc": false,
       "breadcrumb": false,
-      "footer": false,
       "pagination": false,
       "timestamp": false
     }
