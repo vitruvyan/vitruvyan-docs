@@ -6,10 +6,12 @@ import { useChat } from '../chat/hooks/useChat'
 import { useVoice } from '../chat/hooks/useVoice'
 import { ChatMessage } from '../chat/ChatMessage'
 import styles from '../../styles/kb-chat.module.css'
-import inputStyles from '../chat/chat.module.css'
 
-// Dynamic to avoid SSR issues with browser APIs
-const ChatInputDynamic = dynamic(() => import('../chat/ChatInput').then(m => ({ default: m.ChatInput })), { ssr: false })
+const ChatInputDynamic = dynamic(
+  () => import('../chat/ChatInput').then(m => ({ default: m.ChatInput })),
+  { ssr: false }
+)
+const GaussianCanvas = dynamic(() => import('./GaussianCanvas'), { ssr: false })
 
 const SEED_QUESTIONS = [
   { icon: '◈', label: 'What are Sacred Orders?' },
@@ -49,61 +51,82 @@ export function KBChatLanding() {
   }, [isRecording, startRecording, stopRecording])
 
   return (
-    <div className={styles.page}>
+    <div className={hasMessages ? styles.pageActive : styles.page}>
 
-      {/* Title — only when no messages */}
+      {/* Background animation — fixed behind everything */}
+      <GaussianCanvas audioLevel={audioLevel} />
+
+      {/* ── EMPTY STATE: title + input + pills centered as one unit ── */}
       {!hasMessages && (
-        <div className={styles.hero}>
-          <p className={styles.title}>Vitruvyan OS</p>
-          <p className={styles.subtitle}>
-            Explore the platform through natural conversation — or speak directly with your voice
-          </p>
+        <div className={styles.centerUnit}>
+          <div className={styles.hero}>
+            <h1 className={styles.title}>Vitruvyan</h1>
+            <p className={styles.subtitle}>
+              Explore the platform through natural conversation
+            </p>
+          </div>
+
+          <div className={styles.inputWrap}>
+            {isClient && (
+              <ChatInputDynamic
+                onSend={sendMessage}
+                isProcessing={isProcessing}
+                isRecording={isRecording}
+                onMicClick={handleMic}
+                placeholder="Ask about Vitruvyan..."
+              />
+            )}
+            <div className={styles.pills}>
+              {SEED_QUESTIONS.map(q => (
+                <button key={q.label} className={styles.pill} onClick={() => sendMessage(q.label)}>
+                  <span className={styles.pillIcon}>{q.icon}</span>
+                  {q.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Conversation */}
+      {/* ── ACTIVE STATE: conversation + sticky input ── */}
       {hasMessages && (
-        <div className={styles.conversation}>
-          {messages.map((msg, i) => (
-            <ChatMessage
-              key={msg.id}
-              message={msg}
-              onRelatedClick={sendMessage}
-              speakingLevel={
-                msg.sender === 'ai' && msg.isComplete && i === messages.length - 1
-                  ? audioLevel : 0
-              }
-            />
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+        <>
+          <div className={styles.conversation}>
+            {messages.map((msg, i) => (
+              <ChatMessage
+                key={msg.id}
+                message={msg}
+                onRelatedClick={sendMessage}
+                speakingLevel={
+                  msg.sender === 'ai' && msg.isComplete && i === messages.length - 1
+                    ? audioLevel : 0
+                }
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className={styles.inputSection}>
+            {isClient && (
+              <ChatInputDynamic
+                onSend={sendMessage}
+                isProcessing={isProcessing}
+                isRecording={isRecording}
+                onMicClick={handleMic}
+                placeholder="Ask about Vitruvyan..."
+              />
+            )}
+            <div className={styles.pills}>
+              {SEED_QUESTIONS.map(q => (
+                <button key={q.label} className={styles.pill} onClick={() => sendMessage(q.label)}>
+                  <span className={styles.pillIcon}>{q.icon}</span>
+                  {q.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
       )}
-
-      {/* Input + Pills — always at bottom */}
-      <div className={styles.inputSection}>
-        {isClient && (
-          <ChatInputDynamic
-            onSend={sendMessage}
-            isProcessing={isProcessing}
-            isRecording={isRecording}
-            onMicClick={handleMic}
-            placeholder="Ask about Vitruvyan..."
-          />
-        )}
-
-        <div className={styles.pills}>
-          {SEED_QUESTIONS.map(q => (
-            <button
-              key={q.label}
-              className={styles.pill}
-              onClick={() => sendMessage(q.label)}
-            >
-              <span className={styles.pillIcon}>{q.icon}</span>
-              {q.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
     </div>
   )

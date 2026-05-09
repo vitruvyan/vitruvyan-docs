@@ -268,10 +268,10 @@
   gap: 0.5rem;
   background: var(--nextra-bg, #fff);
   border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 1rem;
-  padding: 0.65rem 0.65rem 0.65rem 1.1rem;
+  border-radius: 1.2rem;
+  padding: 0.85rem 0.75rem 0.85rem 1.25rem;
   transition: border-color 0.15s, box-shadow 0.15s;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .inputRow:focus-within {
@@ -296,10 +296,10 @@
   border: none;
   outline: none;
   resize: none;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  min-height: 24px;
-  max-height: 120px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  min-height: 44px;
+  max-height: 160px;
   overflow-y: auto;
   color: inherit;
   font-family: var(--font-inter, sans-serif);

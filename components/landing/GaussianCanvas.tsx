@@ -62,8 +62,9 @@ export default function GaussianCanvas({ audioLevel = 0 }: { audioLevel?: number
       const al = audioLevelRef.current
       const boost = 1 + al * 3
 
-      // Slow fade instead of full clear — creates trails
-      ctx.fillStyle = 'rgba(255,255,255,0.04)'
+      // Trail fade — color matches current theme background
+      const isDark = document.documentElement.classList.contains('dark')
+      ctx.fillStyle = isDark ? 'rgba(17,17,17,0.06)' : 'rgba(255,255,255,0.06)'
       ctx.fillRect(0, 0, w, h)
 
       attractors.current.forEach((att, i) => {
