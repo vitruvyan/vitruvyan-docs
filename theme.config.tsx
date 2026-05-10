@@ -36,20 +36,25 @@ const config: DocsThemeConfig = {
   navbar: {
     extraContent: (
       <a
-        href="/"
+        href="https://app.vitruvyan.com/discover"
         style={{
           fontSize: '0.8rem',
           fontWeight: 500,
           padding: '0.3rem 0.85rem',
           borderRadius: '999px',
           border: '1px solid rgba(109,40,217,0.35)',
+          background: 'rgba(109,40,217,0.06)',
           color: '#7c3aed',
           textDecoration: 'none',
           whiteSpace: 'nowrap',
           transition: 'background 0.15s',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.4rem',
         }}
       >
-        Ask AI
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7c3aed', display: 'inline-block' }} />
+        Ask Vitruvyan
       </a>
     ),
   },
