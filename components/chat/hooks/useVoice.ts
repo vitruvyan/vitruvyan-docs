@@ -2,7 +2,11 @@
 
 import { useState, useRef, useCallback } from 'react'
 
-export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (level: number) => void) {
+export function useVoice(
+  onTranscript: (text: string) => void,
+  onAudioLevel: (level: number) => void,
+  onRecordingIdle?: () => void,  // fires when recording ends with no usable transcript
+) {
   const [isRecording, setIsRecording] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const mediaRef = useRef<MediaRecorder | null>(null)
@@ -57,7 +61,10 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
 
         const mimeType = recorder.mimeType || 'audio/webm'
         const blob = new Blob(chunksRef.current, { type: mimeType })
-        if (blob.size < 1000) return
+        if (blob.size < 1000) {
+          onRecordingIdle?.()
+          return
+        }
 
         try {
           const res = await fetch('/api/kb-stt', {
@@ -66,9 +73,13 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
             body: blob,
           })
           const data = await res.json()
-          if (data.text?.trim()) onTranscript(data.text.trim())
+          if (data.text?.trim()) {
+            onTranscript(data.text.trim())
+          } else {
+            onRecordingIdle?.()
+          }
         } catch {
-          // STT failed silently
+          onRecordingIdle?.()
         }
       }
       mediaRef.current = recorder
@@ -101,8 +112,9 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
 
     } catch {
       // Microphone permission denied
+      onRecordingIdle?.()
     }
-  }, [trackLevel, onTranscript, onAudioLevel])
+  }, [trackLevel, onTranscript, onAudioLevel, onRecordingIdle])
 
   const stopRecording = useCallback(() => {
     mediaRef.current?.stop()
@@ -157,6 +169,7 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
       tick()
     } catch {
       // TTS failed silently
+      setIsSpeaking(false)
     }
   }, [])
 

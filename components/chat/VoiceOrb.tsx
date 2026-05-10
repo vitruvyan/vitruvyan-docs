@@ -124,7 +124,9 @@ export function VoiceOrb({ state, level, embedded = false }: Props) {
     return () => cancelAnimationFrame(frameRef.current)
   }, [])
 
-  if (state === 'idle') return null
+  // When not embedded (fixed widget): hide when idle
+  // When embedded in overlay: show standby pulse so overlay never goes blank
+  if (state === 'idle' && !embedded) return null
 
   const LABELS: Record<OrbState, string> = {
     idle: '',

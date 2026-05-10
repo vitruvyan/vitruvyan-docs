@@ -34,10 +34,17 @@ export function KBChatLanding() {
   const [audioLevel, setAudioLevel] = useState(0)
   const [pendingTranscript, setPendingTranscript] = useState('')
   const [isClient, setIsClient] = useState(false)
+  const [isVoiceSession, setIsVoiceSession] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const voiceActiveRef = useRef(false)
   const lastSpokenIdRef = useRef('')
+  const prevIsSpeakingRef = useRef(false)
+  const isVoiceSessionRef = useRef(false)
+  const startRecordingRef = useRef<() => Promise<void>>(() => Promise.resolve())
   const hasMessages = messages.length > 0
+
+  // Keep refs in sync so async callbacks always see current state
+  isVoiceSessionRef.current = isVoiceSession
 
   useEffect(() => {
     setIsClient(true)
@@ -45,10 +52,21 @@ export function KBChatLanding() {
     return () => document.documentElement.classList.remove('kb-landing')
   }, [])
 
+  // Restart recording when session is active but no audio is happening
+  const handleRecordingIdle = useCallback(() => {
+    if (!isVoiceSessionRef.current) return
+    setTimeout(() => {
+      if (isVoiceSessionRef.current) startRecordingRef.current()
+    }, 300)
+  }, [])
+
   const { isRecording, isSpeaking, startRecording, stopRecording, stopSpeaking, speakText } = useVoice(
     setPendingTranscript,
     setAudioLevel,
+    handleRecordingIdle,
   )
+
+  startRecordingRef.current = startRecording
 
   // Voice input → mark as voice mode, then send
   useEffect(() => {
@@ -77,18 +95,41 @@ export function KBChatLanding() {
     }
   }, [messages, speakText])
 
+  // When TTS ends and session is active → restart listening (400ms gap to avoid echo)
+  useEffect(() => {
+    if (prevIsSpeakingRef.current && !isSpeaking && isVoiceSession && !isRecording) {
+      const timer = setTimeout(() => {
+        if (isVoiceSessionRef.current) startRecordingRef.current()
+      }, 400)
+      prevIsSpeakingRef.current = isSpeaking
+      return () => clearTimeout(timer)
+    }
+    prevIsSpeakingRef.current = isSpeaking
+  }, [isSpeaking, isVoiceSession, isRecording])
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages.length])
 
+  const openVoiceSession = useCallback(() => {
+    setIsVoiceSession(true)
+    startRecording()
+  }, [startRecording])
+
+  const closeVoiceSession = useCallback(() => {
+    setIsVoiceSession(false)
+    voiceActiveRef.current = false
+    if (isRecording) stopRecording()
+    if (isSpeaking) stopSpeaking()
+  }, [isRecording, isSpeaking, stopRecording, stopSpeaking])
+
   const handleMic = useCallback(() => {
-    if (isRecording) {
-      stopRecording()
+    if (isVoiceSession) {
+      closeVoiceSession()
     } else {
-      if (isSpeaking) stopSpeaking() // interrupt AI before recording
-      startRecording()
+      openVoiceSession()
     }
-  }, [isRecording, isSpeaking, startRecording, stopRecording, stopSpeaking])
+  }, [isVoiceSession, openVoiceSession, closeVoiceSession])
 
   const orbState: OrbState = isRecording
     ? 'listening'
@@ -104,8 +145,13 @@ export function KBChatLanding() {
       {/* Background animation — fixed behind everything */}
       <GaussianCanvas audioLevel={audioLevel} />
 
-      {/* Voice overlay — full-screen backdrop with centered orb during voice activity */}
-      <VoiceOverlay state={orbState} level={audioLevel} />
+      {/* Voice overlay — full-screen session, user closes with X */}
+      <VoiceOverlay
+        active={isVoiceSession}
+        state={orbState}
+        level={audioLevel}
+        onClose={closeVoiceSession}
+      />
 
       {/* ── EMPTY STATE: title + input + pills centered as one unit ── */}
       {!hasMessages && (
@@ -122,7 +168,7 @@ export function KBChatLanding() {
               <ChatInputDynamic
                 onSend={sendMessage}
                 isProcessing={isProcessing}
-                isRecording={isRecording}
+                isRecording={isRecording || isVoiceSession}
                 onMicClick={handleMic}
                 placeholder="Ask about Vitruvyan..."
               />
@@ -143,7 +189,7 @@ export function KBChatLanding() {
       {hasMessages && (
         <>
           <div className={styles.conversation}>
-            {messages.map((msg, i) => (
+            {messages.map((msg) => (
               <ChatMessage
                 key={msg.id}
                 message={msg}
@@ -159,7 +205,7 @@ export function KBChatLanding() {
               <ChatInputDynamic
                 onSend={sendMessage}
                 isProcessing={isProcessing}
-                isRecording={isRecording}
+                isRecording={isRecording || isVoiceSession}
                 onMicClick={handleMic}
                 placeholder="Ask about Vitruvyan..."
               />
