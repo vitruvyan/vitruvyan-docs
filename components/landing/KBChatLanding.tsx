@@ -15,6 +15,13 @@ const ChatInputDynamic = dynamic(
 )
 const GaussianCanvas = dynamic(() => import('./GaussianCanvas'), { ssr: false })
 
+function firstSentences(text: string, n = 2): string {
+  const plain = text.replace(/\*\*?([^*]+)\*\*?/g, '$1').replace(/`[^`]+`/g, '').replace(/#{1,6}\s+/g, '').trim()
+  const sentences = plain.match(/[^.!?]+[.!?]+/g) ?? []
+  const result = sentences.slice(0, n).join(' ').trim()
+  return result || plain.slice(0, 400)
+}
+
 const SEED_QUESTIONS = [
   { icon: '◈', label: 'What are Sacred Orders?' },
   { icon: '⊕', label: 'How does LangGraph orchestrate?' },
@@ -38,7 +45,7 @@ export function KBChatLanding() {
     return () => document.documentElement.classList.remove('kb-landing')
   }, [])
 
-  const { isRecording, isSpeaking, startRecording, stopRecording, speakText } = useVoice(
+  const { isRecording, isSpeaking, startRecording, stopRecording, stopSpeaking, speakText } = useVoice(
     setPendingTranscript,
     setAudioLevel,
   )
@@ -66,7 +73,7 @@ export function KBChatLanding() {
     ) {
       lastSpokenIdRef.current = last.id
       voiceActiveRef.current = false
-      speakText(last.text, setAudioLevel)
+      speakText(firstSentences(last.text, 2), setAudioLevel)
     }
   }, [messages, speakText])
 
@@ -75,8 +82,14 @@ export function KBChatLanding() {
   }, [messages.length])
 
   const handleMic = useCallback(() => {
-    isRecording ? stopRecording() : startRecording()
-  }, [isRecording, startRecording, stopRecording])
+    if (isRecording) {
+      stopRecording()
+    } else {
+      if (isSpeaking) stopSpeaking() // interrupt AI before recording
+      voiceActiveRef.current = true
+      startRecording()
+    }
+  }, [isRecording, isSpeaking, startRecording, stopRecording, stopSpeaking])
 
   const orbState: OrbState = isRecording
     ? 'listening'

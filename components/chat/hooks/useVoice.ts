@@ -109,6 +109,17 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
     setIsRecording(false)
   }, [])
 
+  const stopSpeaking = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+      audioRef.current = null
+    }
+    cancelAnimationFrame(animFrameRef.current)
+    setIsSpeaking(false)
+    onAudioLevel(0)
+  }, [onAudioLevel])
+
   const speakText = useCallback(async (text: string, onLevel: (l: number) => void) => {
     try {
       const res = await fetch('/api/kb-tts', {
@@ -149,5 +160,5 @@ export function useVoice(onTranscript: (text: string) => void, onAudioLevel: (le
     }
   }, [])
 
-  return { isRecording, isSpeaking, startRecording, stopRecording, speakText }
+  return { isRecording, isSpeaking, startRecording, stopRecording, stopSpeaking, speakText }
 }
