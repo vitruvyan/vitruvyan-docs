@@ -2,7 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 
 export const config = { maxDuration: 30 }
 
-const KB_API = process.env.KB_API_URL || 'http://localhost:9020'
+// KB_API_URL must be set in Vercel env vars → public api_graph URL (e.g. http://VPS_IP:10004)
+const KB_API = process.env.KB_API_URL || 'http://localhost:10004'
 const KB_API_KEY = process.env.KB_API_KEY || ''
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

@@ -1,0 +1,77 @@
+name: KB Ingest
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "pages/**/*.md"
+      - "pages/**/*.mdx"
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Collect changed and deleted KB files
+        id: files
+        run: |
+          git diff --name-status HEAD~1 HEAD -- 'pages/**/*.md' 'pages/**/*.mdx' > /tmp/diff.txt || true
+          cat /tmp/diff.txt
+
+          # Build JSON payload
+          python3 - <<'EOF'
+          import json, os, subprocess, sys
+
+          diff = open("/tmp/diff.txt").read().strip()
+          files = []
+          deleted = []
+
+          for line in diff.splitlines():
+              if not line.strip():
+                  continue
+              parts = line.split("\t", 1)
+              status = parts[0][0]  # A/M/D/R/C
+              path = parts[-1]      # for renames: "old\tnew", take last
+              if not (path.endswith(".md") or path.endswith(".mdx")):
+                  continue
+              # Prepend "docs/" so source_path matches vitruvyan-core layout
+              rel = "docs/" + path
+              if status == "D":
+                  deleted.append(rel)
+              else:
+                  try:
+                      content = open(path).read()
+                      files.append({"path": rel, "content": content})
+                  except Exception as e:
+                      print(f"WARN: cannot read {path}: {e}", file=sys.stderr)
+
+          payload = {"files": files, "deleted": deleted}
+          with open("/tmp/kb_payload.json", "w") as f:
+              json.dump(payload, f)
+
+          print(f"files={len(files)} deleted={len(deleted)}")
+          EOF
+
+      - name: POST to /kb/ingest
+        run: |
+          STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "${{ secrets.API_GRAPH_URL }}/kb/ingest" \
+            -H "Content-Type: application/json" \
+            -H "X-KB-Secret: ${{ secrets.KB_INGEST_SECRET }}" \
+            --data @/tmp/kb_payload.json \
+            --max-time 120)
+
+          cat /tmp/response.json
+          echo ""
+
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::KB ingest failed with HTTP $STATUS"
+            exit 1
+          fi
+
+          # Surface errors from response
+          ERRORS=$(python3 -c "import json,sys; d=json.load(open('/tmp/response.json')); print('\n'.join(d.get('errors',[])) or 'none')")
+          echo "Ingest errors: $ERRORS"
