@@ -28,8 +28,8 @@ jobs:
 
           API_URL = os.environ["API_GRAPH_URL"].rstrip("/")
           KB_SECRET = os.environ["KB_INGEST_SECRET"]
-          BATCH_SIZE = 10  # files per POST request
-          MAX_WAIT = 240   # seconds per request
+          BATCH_SIZE = 5   # files per POST request (smaller = faster response)
+          MAX_WAIT = 1800  # seconds per request (embedding can take 7-20min per batch)
 
           full_ingest = os.getenv("GITHUB_EVENT_NAME") == "workflow_dispatch" and \
                         os.getenv("INPUT_FULL_INGEST", "true").lower() != "false"
