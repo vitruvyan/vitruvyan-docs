@@ -86,7 +86,6 @@ export function KBChatLanding() {
       stopRecording()
     } else {
       if (isSpeaking) stopSpeaking() // interrupt AI before recording
-      voiceActiveRef.current = true
       startRecording()
     }
   }, [isRecording, isSpeaking, startRecording, stopRecording, stopSpeaking])

@@ -46,25 +46,41 @@ export function VoiceOrb({ state, level, embedded = false }: Props) {
       const { r, g, b } = PALETTE[s] ?? PALETTE.idle
       const t = ts / 1000
 
-      // Minimum breathing so orb is always visible when active
-      const breath = 0.12 + 0.06 * Math.sin(t * 2.4)
-      const lv = Math.max(raw * 1.6, breath)
+      // Amplify raw level — audio levels from analyser are often 0.05–0.2
+      const breath = 0.14 + 0.08 * Math.sin(t * 2.4)
+      const lv = Math.max(raw * 3.5, breath)
 
-      // Soft background disc
-      const bg = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx)
-      bg.addColorStop(0,   `rgba(${r},${g},${b},0.10)`)
-      bg.addColorStop(0.5, `rgba(${r},${g},${b},0.04)`)
+      // Background disc — grows with level
+      const bgR = 55 + 55 * lv
+      const bg = ctx.createRadialGradient(cx, cx, 0, cx, cx, bgR)
+      bg.addColorStop(0,   `rgba(${r},${g},${b},${0.14 + 0.12 * lv})`)
+      bg.addColorStop(0.55,`rgba(${r},${g},${b},${0.04 + 0.06 * lv})`)
       bg.addColorStop(1,   `rgba(${r},${g},${b},0)`)
       ctx.beginPath()
-      ctx.arc(cx, cx, cx, 0, Math.PI * 2)
+      ctx.arc(cx, cx, bgR, 0, Math.PI * 2)
       ctx.fillStyle = bg
       ctx.fill()
 
-      // Rings — scale and opacity driven by lv
+      // Ripple rings — 3 staggered phases, expand outward over ~1s each
+      const rippleGain = Math.min(lv * 1.6, 1)
+      if (rippleGain > 0.08) {
+        for (let i = 0; i < 3; i++) {
+          const phase = (t * 1.1 + i * 0.33) % 1
+          const rr = 38 + phase * 78
+          const ra = (1 - phase) * 0.55 * rippleGain
+          ctx.beginPath()
+          ctx.arc(cx, cx, rr, 0, Math.PI * 2)
+          ctx.strokeStyle = `rgba(${r},${g},${b},${ra})`
+          ctx.lineWidth = 1.5
+          ctx.stroke()
+        }
+      }
+
+      // Main rings — large amplitude
       const rings = [
-        { base: 46, amp: 30, alpha: 0.55, width: 2   },
-        { base: 62, amp: 22, alpha: 0.30, width: 1.5 },
-        { base: 76, amp: 14, alpha: 0.15, width: 1   },
+        { base: 42, amp: 62, alpha: 0.70, width: 2.5 },
+        { base: 58, amp: 42, alpha: 0.38, width: 1.5 },
+        { base: 72, amp: 26, alpha: 0.18, width: 1   },
       ]
       rings.forEach(({ base, amp, alpha, width }) => {
         const radius = base + amp * lv
@@ -79,27 +95,28 @@ export function VoiceOrb({ state, level, embedded = false }: Props) {
       if (s === 'thinking') {
         const a = t * 2.5
         ctx.beginPath()
-        ctx.arc(cx, cx, 54, a, a + Math.PI * 1.3)
+        ctx.arc(cx, cx, 52, a, a + Math.PI * 1.3)
         ctx.strokeStyle = `rgba(${r},${g},${b},0.75)`
         ctx.lineWidth = 2.5
         ctx.lineCap = 'round'
         ctx.stroke()
       }
 
-      // Core orb glow
-      const glow = ctx.createRadialGradient(cx, cx, 2, cx, cx, 34)
-      glow.addColorStop(0, `rgba(${r},${g},${b},1)`)
-      glow.addColorStop(0.6, `rgba(${r},${g},${b},0.7)`)
-      glow.addColorStop(1, `rgba(${r},${g},${b},0.2)`)
+      // Core orb — pulsing size driven by level
+      const coreR = 28 + 16 * lv
+      const glow = ctx.createRadialGradient(cx, cx, 2, cx, cx, coreR)
+      glow.addColorStop(0,   `rgba(${r},${g},${b},1)`)
+      glow.addColorStop(0.55,`rgba(${r},${g},${b},0.75)`)
+      glow.addColorStop(1,   `rgba(${r},${g},${b},0.18)`)
       ctx.beginPath()
-      ctx.arc(cx, cx, 34, 0, Math.PI * 2)
+      ctx.arc(cx, cx, coreR, 0, Math.PI * 2)
       ctx.fillStyle = glow
       ctx.fill()
 
-      // Inner bright spot
+      // Inner highlight
       ctx.beginPath()
-      ctx.arc(cx - 6, cx - 6, 8, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(255,255,255,0.35)`
+      ctx.arc(cx - 5, cx - 5, 7, 0, Math.PI * 2)
+      ctx.fillStyle = `rgba(255,255,255,0.42)`
       ctx.fill()
     }
 
