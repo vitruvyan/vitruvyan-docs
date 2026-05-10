@@ -6,6 +6,7 @@ on:
     paths:
       - "pages/**/*.md"
       - "pages/**/*.mdx"
+  workflow_dispatch:
 
 jobs:
   ingest:
