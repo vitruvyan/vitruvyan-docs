@@ -8,9 +8,10 @@ export type OrbState = 'idle' | 'listening' | 'thinking' | 'speaking'
 interface Props {
   state: OrbState
   level: number // 0–1
+  embedded?: boolean
 }
 
-export function VoiceOrb({ state, level }: Props) {
+export function VoiceOrb({ state, level, embedded = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const levelRef = useRef(level)
   const stateRef = useRef(state)
@@ -116,7 +117,7 @@ export function VoiceOrb({ state, level }: Props) {
   }
 
   return (
-    <div className={styles.wrap}>
+    <div className={embedded ? styles.wrapEmbedded : styles.wrap}>
       <canvas ref={canvasRef} className={styles.canvas} width={220} height={220} />
       <div className={styles.label}>{LABELS[state]}</div>
     </div>

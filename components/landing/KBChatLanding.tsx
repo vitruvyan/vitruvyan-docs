@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { useChat } from '../chat/hooks/useChat'
 import { useVoice } from '../chat/hooks/useVoice'
 import { ChatMessage } from '../chat/ChatMessage'
-import { VoiceOrb } from '../chat/VoiceOrb'
+import { VoiceOverlay } from './VoiceOverlay'
 import type { OrbState } from '../chat/VoiceOrb'
 import styles from '../../styles/kb-chat.module.css'
 
@@ -92,8 +92,8 @@ export function KBChatLanding() {
       {/* Background animation — fixed behind everything */}
       <GaussianCanvas audioLevel={audioLevel} />
 
-      {/* Voice orb — fixed top-center, visible during any voice activity */}
-      <VoiceOrb state={orbState} level={audioLevel} />
+      {/* Voice overlay — full-screen backdrop with centered orb during voice activity */}
+      <VoiceOverlay state={orbState} level={audioLevel} />
 
       {/* ── EMPTY STATE: title + input + pills centered as one unit ── */}
       {!hasMessages && (
