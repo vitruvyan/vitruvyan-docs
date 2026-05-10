@@ -7,6 +7,11 @@ on:
       - "pages/**/*.md"
       - "pages/**/*.mdx"
   workflow_dispatch:
+    inputs:
+      full_ingest:
+        description: "Ingest all pages (true) or only last commit diff (false)"
+        default: "true"
+        required: false
 
 jobs:
   ingest:
@@ -16,54 +21,76 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Collect changed and deleted KB files
-        id: files
+      - name: Collect KB files
         run: |
-          git diff --name-status HEAD~1 HEAD -- 'pages/**/*.md' 'pages/**/*.mdx' > /tmp/diff.txt || true
-          cat /tmp/diff.txt
-
-          # Build JSON payload
           python3 - <<'EOF'
-          import json, os, subprocess, sys
+          import json, os, sys, glob
 
-          diff = open("/tmp/diff.txt").read().strip()
+          full_ingest = os.getenv("GITHUB_EVENT_NAME") == "workflow_dispatch" and \
+                        os.getenv("INPUT_FULL_INGEST", "true").lower() != "false"
+
           files = []
           deleted = []
 
-          for line in diff.splitlines():
-              if not line.strip():
-                  continue
-              parts = line.split("\t", 1)
-              status = parts[0][0]  # A/M/D/R/C
-              path = parts[-1]      # for renames: "old\tnew", take last
-              if not (path.endswith(".md") or path.endswith(".mdx")):
-                  continue
-              # Prepend "docs/" so source_path matches vitruvyan-core layout
-              rel = "docs/" + path
-              if status == "D":
-                  deleted.append(rel)
-              else:
-                  try:
-                      content = open(path).read()
-                      files.append({"path": rel, "content": content})
-                  except Exception as e:
-                      print(f"WARN: cannot read {path}: {e}", file=sys.stderr)
+          if full_ingest:
+              # workflow_dispatch: ingest all pages/**/*.md(x)
+              print("Mode: FULL ingest of all pages/**", file=sys.stderr)
+              for pattern in ["pages/**/*.md", "pages/**/*.mdx"]:
+                  for path in glob.glob(pattern, recursive=True):
+                      try:
+                          content = open(path).read()
+                          files.append({"path": "docs/" + path, "content": content})
+                      except Exception as e:
+                          print(f"WARN: {path}: {e}", file=sys.stderr)
+          else:
+              # push: only diff vs HEAD~1
+              import subprocess
+              diff_out = subprocess.run(
+                  ["git", "diff", "--name-status", "HEAD~1", "HEAD",
+                   "--", "pages/**/*.md", "pages/**/*.mdx"],
+                  capture_output=True, text=True
+              ).stdout.strip()
+              print(f"Diff:\n{diff_out}", file=sys.stderr)
+              for line in diff_out.splitlines():
+                  if not line.strip():
+                      continue
+                  parts = line.split("\t", 1)
+                  status = parts[0][0]
+                  path = parts[-1]
+                  if not (path.endswith(".md") or path.endswith(".mdx")):
+                      continue
+                  rel = "docs/" + path
+                  if status == "D":
+                      deleted.append(rel)
+                  else:
+                      try:
+                          files.append({"path": rel, "content": open(path).read()})
+                      except Exception as e:
+                          print(f"WARN: {path}: {e}", file=sys.stderr)
 
           payload = {"files": files, "deleted": deleted}
-          with open("/tmp/kb_payload.json", "w") as f:
-              json.dump(payload, f)
-
+          json.dump(payload, open("/tmp/kb_payload.json", "w"))
           print(f"files={len(files)} deleted={len(deleted)}")
           EOF
+        env:
+          INPUT_FULL_INGEST: ${{ inputs.full_ingest }}
 
       - name: POST to /kb/ingest
         run: |
+          FILE_COUNT=$(python3 -c "import json; d=json.load(open('/tmp/kb_payload.json')); print(len(d['files']))")
+          echo "Sending $FILE_COUNT files to /kb/ingest"
+
+          if [ "$FILE_COUNT" = "0" ]; then
+            echo "Nothing to ingest, skipping."
+            exit 0
+          fi
+
           STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
             -X POST "${{ secrets.API_GRAPH_URL }}/kb/ingest" \
             -H "Content-Type: application/json" \
             -H "X-KB-Secret: ${{ secrets.KB_INGEST_SECRET }}" \
             --data @/tmp/kb_payload.json \
-            --max-time 120)
+            --max-time 300)
 
           cat /tmp/response.json
           echo ""
@@ -73,6 +100,11 @@ jobs:
             exit 1
           fi
 
-          # Surface errors from response
-          ERRORS=$(python3 -c "import json,sys; d=json.load(open('/tmp/response.json')); print('\n'.join(d.get('errors',[])) or 'none')")
-          echo "Ingest errors: $ERRORS"
+          ERRORS=$(python3 -c "
+          import json,sys
+          d=json.load(open('/tmp/response.json'))
+          errs=d.get('errors',[])
+          print(f\"points_upserted={d.get('points_upserted')} total_chunks={d.get('total_chunks')} errors={len(errs)}\")
+          if errs: print('\\n'.join(errs[:5]))
+          ")
+          echo "$ERRORS"
