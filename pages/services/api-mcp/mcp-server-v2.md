@@ -63,12 +63,42 @@ I domini sono abilitati via `MCP_ENABLED_DOMAINS` (default: `core,dev,dev-write`
 | `dev.search_codebase` | Ricerca testuale bounded sui path ammessi |
 | `dev.open_file` | Slice di file (max 120 righe, path whitelist) |
 | `dev.describe_component` | Contesto strutturato per un componente Vitruvyan noto |
-| `dev.search_kb` | Ricerca semantica su `vitruvyan_kb_dev` (Qdrant + fallback file index) |
+| `dev.search_kb` | Ricerca semantica su `vitruvyan_kb` (Qdrant + fallback file index) |
 | `dev.get_pattern` | Skeleton + convenzioni per un tipo di componente (esplicito) |
 | `dev.validate_change` | Check statici deterministici su file modificati |
 | `dev.get_coding_context` | Aggregazione arch + standards + KB (component_type esplicito se pattern) |
 | `dev.get_dependants` | File che importano o referenziano un simbolo dato |
 | `dev.get_session_context` | **[EXPERIMENTAL]** Sessioni recenti da `vitruvyan_dev_sessions` |
+
+### Capability `kb`
+
+| Nome | Descrizione |
+|---|---|
+| `kb.ask` | RAG diretto su `vitruvyan_kb`: embed query → Qdrant → gpt-4.1 → risposta con sources. Supporta history per follow-up. |
+
+**Esempio:**
+
+```json
+{
+  "capability": "kb.ask",
+  "arguments": { "query": "Come funzionano i Sacred Orders?" }
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": "ok",
+  "answer": "I Sacred Orders sono...",
+  "sources": [{ "url": "/system-core/sacred-orders", "title": "Sacred Orders", "score": 0.91 }]
+}
+```
+
+> `kb.ask` usa `gpt-4.1` per la sintesi (vs `gpt-4o-mini` usato da `/kb/ask` su api_graph).  
+> La collection `vitruvyan_kb` viene aggiornata automaticamente via GitHub Action ad ogni push su `master` → vedi [KB Auto-Ingest](../kb-auto-ingest).
+
+---
 
 ### Capability `dev-write`
 
