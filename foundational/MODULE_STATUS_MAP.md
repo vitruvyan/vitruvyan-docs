@@ -1,6 +1,6 @@
 # Vitruvyan Core — Module Status Map
 
-> **Last updated**: March 08, 2026 — v1.13.0 (Orthodoxy Gate + Plasticity + LLMClassifier)  
+> **Last updated**: May 10, 2026 — v1.14.0 (Epistemic Adaptive Routing + RAG Quality Gate)  
 > **Purpose**: Single-source-of-truth inventory for developers onboarding to Vitruvyan  
 > **Scope**: Module-level status (active/stub/legacy), domain-specificity, test coverage
 
@@ -22,7 +22,7 @@
 ## 1. LangGraph Nodes (Path B — Sync Query Pipeline)
 
 **Location**: `vitruvyan_core/core/orchestration/langgraph/node/`  
-**Total Active Nodes**: 19 (as of Feb 14, 2026) *(full graph wiring; graph terminates via LangGraph `END`, not a node module)*
+**Total Active Nodes**: 21 (as of May 10, 2026) *(full graph wiring; graph terminates via LangGraph `END`, not a node module)*
 
 | Node | Status | Domain-Specific | Env Var | Default Behavior | Notes |
 |------|--------|----------------|---------|------------------|-------|
@@ -33,9 +33,11 @@
 | `emotion_detector.py` (Babel) | ACTIVE | No | - | Calls Babel Gardens HTTP API | Emotion + language detection |
 | `semantic_grounding_node.py` | ACTIVE | No | `VSGS_ENABLED` | VSGS semantic grounding | Feature-flagged |
 | `params_extraction_node.py` | ACTIVE | No | - | Domain-neutral temporal patterns | Finance cleanup completed Feb 14 |
+| `cognitive_node.py` | ACTIVE | No | `COGNITIVE_ENABLED` | Confidence aggregation + deliberation | Phase 4 epistemic signals |
+| `epistemic_router_node.py` | ACTIVE | No | `EPISTEMIC_ROUTER_ENABLED` | Adaptive path-depth selection | Phase 4 epistemic routing |
 | `route_node.py` (decide) | ACTIVE | No | - | Intent-based routing | 6 route branches |
 | `exec_node.py` | HOOK | Yes | `EXEC_DOMAIN` | Fake success stub | Finance: Neural Engine if registered |
-| `qdrant_node.py` | ACTIVE | No | - | Semantic search via QdrantAgent | RAG fallback |
+| `qdrant_node.py` | ACTIVE | No | `RAG_QUALITY_GATE` | Semantic search via QdrantAgent | RAG fallback + optional faithfulness gate |
 | `compose_node.py` | ACTIVE | No | - | VEE narrative composition | Domain-agnostic template engine |
 | `cached_llm_node.py` | ACTIVE | No | - | LLM completion via LLMAgent | Mnemosyne caching |
 | `llm_mcp_node.py` | ACTIVE | No | `USE_MCP` | OpenAI Function Calling + MCP tools | Optional route |

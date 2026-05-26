@@ -4,7 +4,7 @@
 > 1) the **target architecture** (design intent), and  
 > 2) the **current runtime snapshot** (what is active today).
 
-> Snapshot date: **February 23, 2026** (updated post-v1.4.0: early-exit, GraphResponseMin, concurrency)
+> Snapshot date: **May 10, 2026** (updated post-v1.4.0: early-exit, GraphResponseMin, concurrency, epistemic adaptive routing)
 
 ---
 
@@ -60,6 +60,8 @@ sequenceDiagram
     participant EMO as Babel Emotion
     participant SEM as Semantic Grounding (VSGS)
     participant PRM as Params Extraction
+    participant COG as Cognitive
+    participant EPR as Epistemic Router
     participant DEC as Decide
     participant EXE as Execution Node
     participant NRM as Output Normalizer
@@ -81,7 +83,9 @@ sequenceDiagram
         ENT->>EMO: resolved entities/context
         EMO->>SEM: emotional/context signals
         SEM->>PRM: grounded context
-        PRM->>DEC: execution-ready state
+        PRM->>COG: execution-ready state
+        COG->>EPR: confidence + deliberation + session context
+        EPR->>DEC: path depth + route metadata
         DEC->>EXE: route execution
         EXE->>NRM: raw output
         NRM->>ORT: normalized output
@@ -152,9 +156,12 @@ graph TB
 |---|---|---|
 | Parse → Intent → Weavers → Resolver → Emotion → Grounding → Params → Decide | IMPLEMENTED | Present in compiled graph |
 | **Early-exit node** (v1.4.0) | **IMPLEMENTED** | Conditional edge after `intent_detection`; fast path for greeting/farewell/thanks/chit_chat/smalltalk/goodbye/gratitude → `END` (bypasses 14 nodes) |
+| **Cognitive node** (Phase 4) | **IMPLEMENTED** | Wired after `params_extraction`; produces confidence aggregation, deliberation, session context, metacognition snapshot |
+| **Epistemic router** (Phase 4) | **IMPLEMENTED** | Path-depth controller between `cognitive` and `decide`; emits `epistemic_path`, `routing_confidence`, `routing_reasons` |
 | Execution node domain logic | IMPLEMENTED (HOOK) | `exec_node` uses `ExecutionRegistry` (domain-configurable via `EXEC_DOMAIN`) |
 | Entity resolver validation | IMPLEMENTED (HOOK) | `entity_resolver_node` uses `EntityResolverRegistry` (domain-configurable via `ENTITY_DOMAIN`) |
 | Params extraction domain-agnostic | IMPLEMENTED | Finance terms removed (Feb 14, 2026), domain-neutral temporal patterns |
+| Qdrant RAG quality gate | IMPLEMENTED (FEATURE-FLAG) | `RAG_QUALITY_GATE=1` records faithfulness checks and validation warnings without changing default flow |
 | Sacred Flow (`output_normalizer -> orthodoxy -> vault -> compose -> can`) | IMPLEMENTED | Wired and active |
 | **GraphResponseMin contract** (v1.4.0) | **IMPLEMENTED** | Channel-agnostic response envelope: `human` + `follow_ups` + `session_min` + `orthodoxy_status` + `route_taken` |
 | **asyncio.to_thread concurrency** (v1.4.0) | **IMPLEMENTED** | Graph executes in worker thread; FastAPI event loop stays responsive for N concurrent users |
@@ -234,9 +241,10 @@ This section is written for engineers: it maps the diagrams above to **concrete 
 
 **Graph structure (as wired today — v1.4.0)**:
 - **Conditional edge after `intent_detection`** (v1.4.0): if `is_early_exit(state)` returns True, routes to `early_exit` → `END` (bypasses 14 nodes). Otherwise continues to `weaver`.
-- Node chain (full path): `parse` → `intent_detection` → `weaver` → `entity_resolver` → `babel_emotion` → `semantic_grounding` → `params_extraction` → `decide` → `exec|qdrant|compose|llm_soft|codex_hunters|llm_mcp` → `output_normalizer` → `orthodoxy` → `vault` → `compose` → `can` → `[advisor]` → `END`.
+- Node chain (full path): `parse` → `intent_detection` → `weaver` → `entity_resolver` → `babel_emotion` → `semantic_grounding` → `params_extraction` → `cognitive` → `epistemic_router` → `decide` → `exec|qdrant|compose|llm_soft|codex_hunters|llm_mcp` → `output_normalizer` → `orthodoxy` → `vault` → `compose` → `can` → `[advisor]` → `END`.
 - **Early-exit path**: `parse` → `intent_detection` → `early_exit` → `END` (greeting, farewell, thanks, chit_chat, smalltalk, goodbye, gratitude).
 - Routing is implemented as a conditional edge out of `decide` based on `state["route"]` (see `route_from_decide()` in `vitruvyan_core/core/orchestration/langgraph/graph_flow.py`).
+- `route_node` preserves the operational route in `state["operational_route"]` before CAN can overwrite UI-facing route fields.
 
 **Feature flags / configuration knobs that change behavior**:
 - `INTENT_DOMAIN` selects which intent registry is configured at import time in `vitruvyan_core/core/orchestration/langgraph/graph_flow.py` (default: `generic`).
@@ -245,6 +253,8 @@ This section is written for engineers: it maps the diagrams above to **concrete 
 - `ENABLE_MINIMAL_GRAPH=true` swaps `build_graph()` for a reduced `build_minimal_graph()` in `vitruvyan_core/core/orchestration/langgraph/graph_runner.py`.
 - `USE_MCP=1` can reroute `dispatcher_exec` to `llm_mcp` in `route_from_decide()` (MCP tool-calling gateway).
 - `VSGS_ENABLED=1` enables semantic grounding inside `semantic_grounding_node` (`vitruvyan_core/core/orchestration/langgraph/node/semantic_grounding_node.py`).
+- `EPISTEMIC_ROUTER_ENABLED=1` enables adaptive routing depth selection inside `epistemic_router_node` (`vitruvyan_core/core/orchestration/langgraph/node/epistemic_router_node.py`).
+- `RAG_QUALITY_GATE=1` enables the optional Qdrant faithfulness gate; `RAG_QUALITY_THRESHOLD` sets the warning threshold (default: `0.65`).
 - `EARLY_EXIT_INTENTS` (v1.4.0) overrides default early-exit intents (comma-separated, default: `greeting,farewell,thanks,chit_chat,smalltalk,goodbye,gratitude`).
 - `SESSION_CACHE_MAX` (v1.4.0) maximum entries in the in-memory LRU session cache (default: `1000`).
 - `SESSION_CACHE_TTL` (v1.4.0) session TTL in seconds (default: `3600` = 1 hour).
