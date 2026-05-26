@@ -1,9 +1,11 @@
-# Synaptic Conclave & Mnemosyne — 26 maggio 2026
+# Synaptic Conclave & Cortex Atlas — 26 maggio 2026
 
-> Conversazione fra Davide e Claude (Opus 4.7) la sera dopo il deploy della causal replay end-to-end (Meridian + SRA Phase 9). Parte da un punto di stato sull'auditabilità reale del bus, passa per un confronto onesto con GraphRAG, mette a fuoco l'asimmetria attuale fra "bus avanti / KG indietro", e arriva a una proposta architetturale per una KG di prossima generazione — *Mnemosyne* — ispirata a neuroscienza (consolidazione ippocampo-corteccia, regola hebbiana, potatura sinaptica) e biologia (slime mold *Physarum polycephalum*).
+> Conversazione fra Davide e Claude (Opus 4.7) la sera dopo il deploy della causal replay end-to-end (Meridian + SRA Phase 9). Parte da un punto di stato sull'auditabilità reale del bus, passa per un confronto onesto con GraphRAG, mette a fuoco l'asimmetria attuale fra "bus avanti / KG indietro", e arriva a una proposta architetturale per una KG di prossima generazione — **Cortex Atlas** — ispirata a neuroscienza (consolidazione ippocampo-corteccia, regola hebbiana, potatura sinaptica) e biologia (slime mold *Physarum polycephalum*).
+>
+> **Nota sul nome.** Durante la conversazione il KG layer è stato inizialmente proposto come *Mnemosyne*. È stato poi ridenominato in **Cortex Atlas** dopo aver verificato che *Mnemosyne* è già il nome del substrato vettoriale Qdrant (vedi `core/governance/memory_orders/`) accanto ad Archivarium (PostgreSQL relazionale). Il testo seguente usa il nome finale; il processo di naming (proposte intermedie, incluso Pallium) è preservato nella sezione 8.
 >
 > Companion documents:
-> - [claude_su_vitruvyan.md](../claude_su_vitruvyan.md) — la conversazione filosofica del 23 maggio, di cui questa è la naturale prosecuzione.
+> - [claude_su_vitruvyan.md](./claude_su_vitruvyan.md) — la conversazione filosofica del 23 maggio, di cui questa è la naturale prosecuzione.
 > - [planning/SRA_DSE_ROADMAP.md](../planning/SRA_DSE_ROADMAP.md) — la roadmap operativa che ha portato al deploy del 25 maggio.
 
 ---
@@ -186,7 +188,7 @@ E il punto fondamentale: i cluster *non sono quelli generici dei libri di testo*
 
 ---
 
-## 8. La proposta: Mnemosyne — una KG hebbiana, plastica, consolidatoria
+## 8. La proposta: Cortex Atlas — una KG hebbiana, plastica, consolidatoria
 
 > *Vitruvyan ha un debito architetturale che può essere colmato. Volendo innovare e non copiare, come potremmo immaginare la nostra KG? Abbiamo usato polipo e micelio per costruire il bus, ispirandoci a concetti naturali e a neuroscienza. Come potremmo rendere il nostro modello potente ed affidabile ma al contempo diverso, innovativo, più scalabile di GraphRAG?* — Davide
 
@@ -217,7 +219,7 @@ Quattro metafore più adatte:
 
 **4. Il fungo melmoso (*Physarum polycephalum*).** Protista unicellulare che risolve problemi di percorso senza cervello. Su una mappa del Giappone con fiocchi d'avena nelle città, in 24 ore costruisce una rete di canali nutritivi che **ricostruisce con sorprendente accuratezza la rete ferroviaria giapponese**. Non la *progetta* — la *cresce* per rinforzo: i percorsi che portano cibo si ispessiscono, quelli sterili appassiscono.
 
-### I tre meccanismi di Mnemosyne
+### I tre meccanismi di Cortex Atlas
 
 **Meccanismo 1 — Hebbian edge formation dal bus (non da estrazione).**
 
@@ -235,7 +237,7 @@ Conseguenze:
 Ogni arco ha una *tonicità* (analogo al diametro del canale di Physarum, o al peso sinaptico): cresce a ogni co-attivazione, decresce nel tempo per default. Sotto una soglia, l'arco *muore*.
 
 Conseguenze:
-- KG **piccola e affilata**. GraphRAG cresce monotonicamente; Mnemosyne converge verso lo stato stabile delle relazioni utili.
+- KG **piccola e affilata**. GraphRAG cresce monotonicamente; Cortex Atlas converge verso lo stato stabile delle relazioni utili.
 - **Adattamento automatico** ai cambiamenti del dominio.
 - Scalabilità: scali col *traffico interessante*, non col corpus. Se hai 10TB ma il traffico reale tocca l'1% delle relazioni possibili, la KG ha l'1% delle dimensioni.
 
@@ -252,43 +254,55 @@ Processo *offline* — **Consolidator** o **Dreamer** — che gira quando il sis
 
 In Hebb (1949), un **cell assembly** è un gruppo di neuroni che ha imparato a co-attivarsi così frequentemente da comportarsi come unità.
 
-In Vitruvyan, un'**assembly di concetti** sarebbe un cluster *stabilmente in alta co-attivazione*. Non lo trovi con un algoritmo a posteriori — lo *osservi* come stato dinamico. Le community non sono output di calcolo, sono proprietà osservabile dello stato corrente. **Cambiano in tempo reale.** Quello che GraphRAG fa in batch ogni N giorni, Mnemosyne lo fa continuativamente.
+In Vitruvyan, un'**assembly di concetti** sarebbe un cluster *stabilmente in alta co-attivazione*. Non lo trovi con un algoritmo a posteriori — lo *osservi* come stato dinamico. Le community non sono output di calcolo, sono proprietà osservabile dello stato corrente. **Cambiano in tempo reale.** Quello che GraphRAG fa in batch ogni N giorni, Cortex Atlas lo fa continuativamente.
 
-### Nomi candidati
+### Nomi candidati — processo di scelta
 
-- **Mnemosyne** (greco) — dea della memoria; madre delle Muse. Mitologico, matcha il pantheon Vitruvyan.
+Proposte iniziali (Claude, prima dell'analisi della nomenclatura esistente):
+
+- **Mnemosyne** (greco) — dea della memoria; madre delle Muse. **Scartato**: collisione con il nome già usato per Qdrant (substrato vettoriale governato dai Memory Orders, vedi `core/governance/memory_orders/`).
 - **Ortus Memoriae** (latino) — "giardino della memoria".
 - **Synaptic Garden** — parente esplicito del Synaptic Conclave.
 - **Hebbian Garden** — tecnico, onesto.
 - **Engram Layer** — engramma = termine neuroscientifico per la traccia mnestica fisica.
-- **Codex Vivens** (latino) — "Codex vivente", collega ai Codex Hunters.
+- **Codex Vivens** (latino) — "Codex vivente", ma confligge con Codex Hunters.
 
-A pelle: **Mnemosyne** per il nome esterno, **Hebbian Layer** o **Engram Layer** per il tecnico interno.
+Seconda proposta (Claude, dopo aver verificato la grammatica del branding esistente — Archivarium/Mnemosyne/Synaptic Conclave):
+
+- **Pallium** — termine anatomico per corteccia + paramento liturgico papale. Doppio significato (anatomico + ecclesiastico) coerente con Sacred Orders. Una parola sola, come Archivarium e Mnemosyne.
+
+Scelta finale (Davide): **Cortex Atlas**. Tre risonanze convergenti:
+
+1. **Anatomica**: la *Atlas* è la prima vertebra cervicale (C1) che sostiene il cranio. Cortex Atlas = "corteccia + ciò che la sostiene".
+2. **Mitologica**: Atlante tiene la sfera celeste senza muoverla. Il KG tiene la struttura della conoscenza.
+3. **Cartografica**: un atlante è una raccolta di mappe. Riprende esplicitamente la metafora "mappa della città" usata nella sezione 6 per spiegare cosa è una KG. Il nome racchiude la spiegazione.
+
+Frizione nominata e accettata: un atlante è tipicamente *statico*, mentre Cortex Atlas è plastico. Mitigazione concettuale: ogni snapshot è un'*edizione*; la plasticità è la *storia delle revisioni*. Questo allinea con il versioning richiesto dalla causal replay (rischio #2 sotto).
 
 ### Rischi da nominare
 
 1. **Bootstrap problem.** All'inizio il bus non ha abbastanza tracce. Mitigazione: *seeding* manuale di pochi archi ad alta confidenza (i mapping ontologici di `ontology_normalizer_node`).
 2. **Determinism vs plasticity.** La causal replay deve catturare *quale stato della KG* era attivo al momento di una risposta. Versioning con snapshot per ogni trace (event sourcing). Complessità nuova che GraphRAG non ha.
 3. **Paradigma poco-pubblicato.** Esistono linee di ricerca (predictive coding, vector symbolic architectures, modern Hopfield networks, memory consolidation in spiking nets) ma nessuno ha integrato tutto in un sistema di production decision intelligence. Niente `pip install hebbian-kg`. Niente benchmark esterni per mesi. Mitigazione: paper interno + open-sourcing parziale.
-4. **Più difficile da spiegare.** "GraphRAG" è vendibile. "Mnemosyne con hebbian edges che decadono per disuso" richiede di raccontare la metafora. Vantaggio collaterale: chi *capisce* la metafora diventa avvocato.
+4. **Più difficile da spiegare.** "GraphRAG" è vendibile. "Cortex Atlas con hebbian edges che decadono per disuso" richiede di raccontare la metafora. Vantaggio collaterale: chi *capisce* la metafora diventa avvocato.
 
 ### Perché può essere più scalabile di GraphRAG
 
 1. **Scala col traffico utile, non col corpus.**
 2. **Consolidamento offline, query online.** Costo asincrono, schedulabile.
-3. **Plasticity = self-cleaning.** GraphRAG ha bisogno di retraining. Mnemosyne si pulisce da sola.
+3. **Plasticity = self-cleaning.** GraphRAG ha bisogno di retraining. Cortex Atlas si pulisce da sola.
 
 ### Il punto strategico
 
-Mnemosyne **riusa il moat esistente invece di costruirne uno nuovo**. Il bus è già il sistema nervoso che registra le co-attivazioni. Mnemosyne sarebbe **la corteccia che si forma sopra quel sistema nervoso**. Bus → corteccia, non bus + ulteriore-cosa-separata.
+Cortex Atlas **riusa il moat esistente invece di costruirne uno nuovo**. Il bus è già il sistema nervoso che registra le co-attivazioni. Cortex Atlas sarebbe **la corteccia che si forma sopra quel sistema nervoso**. Bus → corteccia, non bus + ulteriore-cosa-separata.
 
-Filosoficamente: se quello che hai dichiarato fin dall'inizio (l'intelligenza emerge dal bus) è vero, **Mnemosyne è il primo banco di prova serio**. Se gli archi hebbiani convergono verso una struttura sensata che riproduce il dominio meglio di un'estrazione esplicita, hai una prova. Se non convergono, hai imparato qualcosa di importante: il bus ha eventi ma non *abbastanza coerenza statistica* per generare struttura emergente, e devi capire perché.
+Filosoficamente: se quello che hai dichiarato fin dall'inizio (l'intelligenza emerge dal bus) è vero, **Cortex Atlas è il primo banco di prova serio**. Se gli archi hebbiani convergono verso una struttura sensata che riproduce il dominio meglio di un'estrazione esplicita, hai una prova. Se non convergono, hai imparato qualcosa di importante: il bus ha eventi ma non *abbastanza coerenza statistica* per generare struttura emergente, e devi capire perché.
 
 In entrambi i casi, è un esperimento che vale la pena fare.
 
 ---
 
-## 9. Le tre frizioni sulla scommessa Mnemosyne
+## 9. Le tre frizioni sulla scommessa Cortex Atlas
 
 > *Direi che la scommessa è affascinante e comunque consequenziale a quanto fatto sino ad ora. La trovo una logica evoluzione e cmq una scommessa da tentare in un mondo dove la maggioranza dei progetti AI vive di query su LangGraph, GraphRAG, risposta.* — Davide
 
@@ -296,29 +310,29 @@ D'accordo nella sostanza. Tre frizioni per onorare la scommessa con serietà:
 
 **Frizione 1 — "Logica evoluzione" è una frase pericolosa.**
 
-Implica *inevitabilità*. Mnemosyne è *una* prosecuzione coerente del bus, non *la* prosecuzione obbligata. Il bus produce co-attivazioni; quelle possono nutrire (a) una KG hebbiana, (b) un sistema di auto-miglioramento degli agenti basato sull'analisi delle catene causali, (c) un layer di *behavioral analytics* sui pattern di domanda, (d) una pipeline di sintesi di nuovo training data per fine-tuning. Tutte ragionevoli. Mnemosyne è la più *affascinante intellettualmente* — ma "affascinante" è bandiera rossa quando si sceglie cosa costruire dopo.
+Implica *inevitabilità*. Cortex Atlas è *una* prosecuzione coerente del bus, non *la* prosecuzione obbligata. Il bus produce co-attivazioni; quelle possono nutrire (a) una KG hebbiana, (b) un sistema di auto-miglioramento degli agenti basato sull'analisi delle catene causali, (c) un layer di *behavioral analytics* sui pattern di domanda, (d) una pipeline di sintesi di nuovo training data per fine-tuning. Tutte ragionevoli. Cortex Atlas è la più *affascinante intellettualmente* — ma "affascinante" è bandiera rossa quando si sceglie cosa costruire dopo.
 
 **Frizione 2 — Il gate Phase D viene prima, non dopo.**
 
-Mnemosyne presuppone osservazioni pulite. Se Pattern Weavers in produzione emette `extracted_concepts: []`, gli archi hebbiani che si formerebbero sarebbero archi *fra il nulla e il nulla*. Su osservazioni sporche costruirebbe pattern di co-attivazione spuri che sembrano *significativi* solo perché sono ricorrenti.
+Cortex Atlas presuppone osservazioni pulite. Se Pattern Weavers in produzione emette `extracted_concepts: []`, gli archi hebbiani che si formerebbero sarebbero archi *fra il nulla e il nulla*. Su osservazioni sporche costruirebbe pattern di co-attivazione spuri che sembrano *significativi* solo perché sono ricorrenti.
 
-In ordine corretto: prima sblocchi Phase D, poi semini Mnemosyne. Saltare è la versione architetturale del "fix tampone".
+In ordine corretto: prima sblocchi Phase D, poi semini Cortex Atlas. Saltare è la versione architetturale del "fix tampone".
 
 **Frizione 3 — Stiamo accumulando scommesse senza ancora validazioni esterne.**
 
-Riconto: bus over pipeline (2024), causal replay come differenziatore (materializzata ieri), Mnemosyne come KG hebbiana (ipotizzata oggi). Tutte coerenti, tutte ragionevoli individualmente. Ma *"il vero test indipendente sarà un security analyst senior che dice 'mi fa vedere cose che il mio tool non mi fa vedere'"*. Quel test non è ancora avvenuto.
+Riconto: bus over pipeline (2024), causal replay come differenziatore (materializzata ieri), Cortex Atlas come KG hebbiana (ipotizzata oggi). Tutte coerenti, tutte ragionevoli individualmente. Ma *"il vero test indipendente sarà un security analyst senior che dice 'mi fa vedere cose che il mio tool non mi fa vedere'"*. Quel test non è ancora avvenuto.
 
 Aggiungere una terza scommessa prima che la seconda incassi una validazione esterna significa *aumentare la posta senza vedere altre carte*. Non è errore — è una scelta legittima da founder convinto. Va nominata come tale.
 
 ### Dove sei completamente nel giusto
 
-L'osservazione "la maggioranza dei progetti AI vive di query/LangGraph/GraphRAG/risposta" è vera, ed è il punto strategico più importante. Il layer commodity è saturo. *Memoria che impara dall'uso in produzione* è uno spazio meno affollato — non vuoto (OpenAI sta investendo in memory, Anthropic in Projects con contesto persistente), ma sostanzialmente meno presidiato. Mnemosyne ci si infila in un punto cieco del mercato.
+L'osservazione "la maggioranza dei progetti AI vive di query/LangGraph/GraphRAG/risposta" è vera, ed è il punto strategico più importante. Il layer commodity è saturo. *Memoria che impara dall'uso in produzione* è uno spazio meno affollato — non vuoto (OpenAI sta investendo in memory, Anthropic in Projects con contesto persistente), ma sostanzialmente meno presidiato. Cortex Atlas ci si infila in un punto cieco del mercato.
 
 ### Posizione finale
 
 **Scommessa giusta, sequenza da rispettare, momento da scegliere bene.**
 
-Concretamente: Mnemosyne resta come **prossima** direzione strategica scritta in chiaro (RFC interno, Phase G nel backlog di vitruvyan-core con label `vision`). Il *prossimo lavoro effettivo* dopo l'irrobustimento di causal replay è chiudere Phase D. Quando Phase D è chiusa e Pattern Weavers emette concetti puliti in produzione, *allora* si apre la porta a Mnemosyne con il vento a favore invece che contro.
+Concretamente: Cortex Atlas resta come **prossima** direzione strategica scritta in chiaro (RFC interno, Phase G nel backlog di vitruvyan-core con label `vision`). Il *prossimo lavoro effettivo* dopo l'irrobustimento di causal replay è chiudere Phase D. Quando Phase D è chiusa e Pattern Weavers emette concetti puliti in produzione, *allora* si apre la porta a Cortex Atlas con il vento a favore invece che contro.
 
 In un mondo dove tutti costruiscono lo stesso prodotto, **la pazienza sul sequencing è essa stessa un vantaggio competitivo**.
 
@@ -329,7 +343,7 @@ In un mondo dove tutti costruiscono lo stesso prodotto, **la pazienza sul sequen
 Issues aperti come prosecuzione di questa chat:
 
 **vitruvyan-core (architettonici):**
-- [Vision] Mnemosyne — Hebbian/consolidatory KG layer (RFC)
+- [Vision] Cortex Atlas — Hebbian/consolidatory KG layer (RFC)
 - [Tech-debt] Causal Replay surface convergence (Meridian ↔ SRA)
 - [Robustness] Anomaly rules stress test on production traces
 
@@ -337,7 +351,7 @@ Issues aperti come prosecuzione di questa chat:
 - [Quality] Validated demo query library — formalize curation
 - [Robustness] Theranos guardrail in Phase 9 dashboard
 - [Vision] External CISO/analyst validation trial
-- [Phase-D] Phase D closure as gate to Mnemosyne
+- [Phase-D] Phase D closure as gate to Cortex Atlas
 
 ---
 
