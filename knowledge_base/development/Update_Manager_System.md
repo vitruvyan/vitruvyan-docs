@@ -774,7 +774,7 @@ Implemented modules:
      - `total_verticals: int`
      - `exit_code()` → 0 (pass) | 1 (block)
      - `to_json()` → JSON artifact for CI
-   - **CLI entry point**: `python -m vitruvyan_core.core.platform.update_manager.ci.release_blocker`
+   - **CLI entry point**: `python -m vitruvyan_core.core.platform.system.ci.release_blocker`
 
 4. **.github/workflows/update_manager_ci.yml** (GitHub Actions)
    - **Triggers**:
