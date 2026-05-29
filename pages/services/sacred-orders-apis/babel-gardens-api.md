@@ -2,7 +2,7 @@
 
 > **Last Updated**: May 29, 2026 (v3.2)
 
-<p class="kb-subtitle">LIVELLO 2 service for the four signal families + multilingual embeddings.</p>
+<p class="kb-subtitle">LIVELLO 2 service for signal extraction + multilingual embeddings. Domain-agnostic core; verticals plug their signal families in via <code>BABEL_DOMAIN</code>.</p>
 
 ## Location
 
@@ -18,6 +18,11 @@ Default port is **`8009`** (env: `PORT`). On the dev compose stack the published
 
 Fused signal extraction. **This is what the chat orchestrator (`/run/stream`) calls in Phase 0.** All registered Sacred Order contributors run concurrently in a thread pool — the wall-clock is the slowest single contributor, not the sum.
 
+The endpoint itself is domain-agnostic. Which contributors run depends on what was registered at startup:
+
+- **always**: `LanguageContributor`, `SentimentContributor` (core)
+- **conditionally**: vertical contributors registered when `BABEL_DOMAIN=<vertical>` is set (see [Security domain](#security-domain-vertical-extension) below for the reference example)
+
 ### Request
 
 ```http
@@ -28,13 +33,15 @@ Content-Type: application/json
   "text": "string (required, max 10000 chars)",
   "correlation_id": "string (optional, propagates to bus events)",
   "tenant_id": "string (optional)",
-  "families": ["language", "security_threat", "analyst_posture", "conversational_sentiment"]
+  "families": ["language", "conversational_sentiment", "..."]
 }
 ```
 
-`families` is an optional whitelist — leave it out to run all registered contributors. Useful for partial calls (e.g. only language detection).
+`families` is an optional whitelist — leave it out to run all registered contributors. Useful for partial calls (e.g. only language detection). Valid family names are whatever the active domain registered; the two core families are always available.
 
-### Response
+### Response — core-only example (no `BABEL_DOMAIN`)
+
+When no vertical is loaded, the response carries only the two core families:
 
 ```json
 {
@@ -67,15 +74,20 @@ Content-Type: application/json
       "contributors_invoked": ["language"],
       "errors": []
     },
-    "security_threat": { "signals": [ ... ], "elapsed_ms": 3640, "contributors_invoked": ["secbert", "security_threat_enums"], "errors": [] },
-    "analyst_posture": { ... },
-    "conversational_sentiment": { ... }
+    "conversational_sentiment": {
+      "signals": [ /* may be empty if skip-if-neutral fired */ ],
+      "elapsed_ms": 120.0,
+      "contributors_invoked": ["sentiment"],
+      "errors": []
+    }
   },
-  "elapsed_ms_total": 6850.2,
+  "elapsed_ms_total": 134.5,
   "text_hash": "sha256(text[:200])",
   "correlation_id": "..."
 }
 ```
+
+When a vertical is loaded its families appear as additional top-level keys under `signals` — see the security example below.
 
 ### Latency
 
@@ -83,7 +95,7 @@ Content-Type: application/json
 |---|---|---|
 | Language only (cache hit) | 50-300 ms | <20 ms |
 | Language only (LLM Tier D fallback) | 1-3 s | <20 ms |
-| Full Phase 0 (4 families) | 6-7 s | ~1 s |
+| Phase 0 with 4 families (security domain loaded) | 6-7 s | ~1 s |
 
 Phase 0 timeout from the graph side is 15 s (`SIGNALS_EXTRACT_TIMEOUT_S`).
 
@@ -100,7 +112,7 @@ Every family payload is:
 }
 ```
 
-A failure in one contributor (e.g. LLM timeout in `analyst_posture`) does not affect the others — the response still returns with the family's `errors` populated.
+A failure in one contributor does not affect the others — the response still returns with the family's `errors` populated.
 
 ## Embeddings
 
@@ -134,7 +146,7 @@ These endpoints were retired when the signal architecture replaced the per-famil
 |---|---|
 | `POST /v1/sentiment/analyze` | `/v1/signals/extract` with `families: ["conversational_sentiment"]` |
 | `POST /v1/sentiment/batch` | same — batch through the conversational layer instead |
-| `POST /v1/emotion/detect` | retired entirely. The `analyst_posture` family in `/v1/signals/extract` covers the operationally relevant dimensions (urgency, stance, confidence) — emotion in the abstract was a finance-leftover concept that doesn't map onto security workflows |
+| `POST /v1/emotion/detect` | retired entirely. Emotion in the abstract was a finance-vertical leftover concept; verticals that need affective dimensions define their own signal families (see the `analyst_posture` family in the security vertical for an example) |
 
 ## Health / metrics
 
@@ -153,11 +165,11 @@ Loaded in `services/api_babel_gardens/config.py`:
 | Variable | Default | Notes |
 |---|---|---|
 | `HOST`, `PORT` | `0.0.0.0`, `8009` | |
-| `BABEL_DOMAIN` | (unset) | Set to `security` to register the security contributors at startup |
-| `EMBEDDING_SERVICE_URL` | `http://embedding:8010` | api_embedding URL (Nomic, for the corpus). **Must be the docker service name inside the network** — `localhost` doesn't work inside the container |
+| `BABEL_DOMAIN` | (unset) | Set to a vertical name (e.g. `security`) to register that vertical's contributors at startup. When unset, only core contributors (`language`, `conversational_sentiment`) run |
+| `EMBEDDING_SERVICE_URL` | `http://embedding:8010` | `api_embedding` URL (Nomic, for the corpus). **Must be the docker service name inside the network** — `localhost` doesn't work inside the container |
 | `BABEL_LANGUAGE_SIMILARITY_THRESHOLD` | 0.65 (dev) / 0.85 (prod) | Tier B threshold for the language cascade. Lower while the seed sample is small |
 | `HUGGINGFACE_HUB_TOKEN` | (required for gated repos) | EmbeddingGemma is gated; the token must have access. `huggingface_hub.login()` is called process-wide at boot |
-| `OPENAI_API_KEY` | (required) | Used by LLM-as-classifier contributors (posture, threat enums, language Tier D) |
+| `OPENAI_API_KEY` | (required) | Used by LLM-as-classifier contributors and the language cascade's Tier D fallback |
 | `BABEL_COMPREHENSION_V3` | `0` | Feature flag for the legacy `/v2/comprehend` endpoint. Independent from the Phase 0 path |
 | `QDRANT_HOST`, `QDRANT_PORT` | `qdrant`, `6333` | Used by the language cascade Tier B (Qdrant search on `language_samples`) |
 | `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB` | `redis`, `6379`, `0` | Bus + language cache Tier C |
@@ -185,10 +197,27 @@ Pydantic models live in `services/api_babel_gardens/schemas/api_models.py`. Key 
 The full signal contract is in `vitruvyan_core/contracts/comprehension.py`:
 
 - `SignalEvidence` — `value` is `Union[float, str, List[str]]` to support `value_type: float | enum | multi-enum`
-- `ISignalContributor` — interface that every plugin implements
+- `ISignalContributor` — interface that every plugin (core or vertical) implements
 
 ## Scope boundary
 
 - Babel Gardens is a **semantic-linguistic service**, not the graph router. Execution routing is decided by LangGraph (`intent_detection_node.py`, `route_node.py`).
 - Babel **does not write to Qdrant during chat** — the `language_samples` collection is populated once by the seed script and read at Tier B. The corpus retrieval Qdrant writes are done by `evidence_indexer`, not by Babel.
 - Babel **does not write to Postgres directly** — the bus consumer (`signal_observations_persister`) handles persistence. Babel only emits.
+- Babel **does not define vertical signals** — schemas live under `domains/<vertical>/babel_gardens/`, never under `core/cognitive/babel_gardens/`.
+
+## Security domain (vertical extension)
+
+When the service is launched with `BABEL_DOMAIN=security`, the lifespan registers two additional contributors on top of the core ones, bringing the total to **four families** at Phase 0.
+
+### Plugins registered
+
+- `plugins/secbert_contributor.py` — SecBERT model wrapping → `security_threat` family (numeric severity signals)
+- `plugins/security_threat_enums_contributor.py` — LLM-as-classifier for the 5 enum threat signals → `security_threat` family
+- `plugins/analyst_posture_contributor.py` — LLM-as-classifier for the 3 posture signals → `analyst_posture` family
+
+### Schema
+
+`vitruvyan_core/domains/security/babel_gardens/signals_security.yaml` declares the 14 security signals (across the `security_threat` + `analyst_posture` families). The Phase 0 state keys populated under this domain are `state["security_signals"]` and `state["analyst_posture"]` (in addition to the always-present `state["language_detected"]` and `state["sentiment"]`).
+
+For the full family / signal breakdown and downstream consumption see the [Security domain](../system-core/sacred-orders/babel-gardens.md#security-domain-vertical-extension) section on the Sacred Order page.
