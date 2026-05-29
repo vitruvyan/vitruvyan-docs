@@ -106,6 +106,43 @@ Downstream nodes never re-detect; they consume from state. `compose_node` adapts
 
 Phase 0 budget: ~6-7s wall-clock when contributors are cold; <50ms when results are cached. Non-fatal on failure — if Babel is unreachable the graph runs with `signals=None` and falls back to default behavior.
 
+### End-to-end pipeline (Phase 0 + bus + persistence)
+
+The full flow from the user's request through Babel, the Cognitive Bus, and into PostgreSQL. The SYNC response (graph ← signals dict) and the FIRE-AND-FORGET bus emissions happen in the **same request** — Babel writes to the bus before returning to the graph, but the graph doesn't wait on the bus.
+
+```mermaid
+flowchart TD
+    UI([UI])
+    Graph["api_graph<br/>/run/stream"]
+    Babel["aicomsec_babel_gardens<br/>POST /v1/signals/extract<br/>(4 contributors run concurrently)"]
+    Bus[("Cognitive Bus<br/>Redis Streams")]
+    Persister["aicomsec_babel_signal_observations<br/>(NEW container)<br/>──────<br/>consumer group: signal_observations<br/>UPSERT on (text_hash, family, contributor)<br/>ACK per event · no redelivery loop<br/>drain_pel safety net at boot"]
+    PG[(PostgreSQL · signal_observations<br/>──────<br/>language: 69 rows / 189 occurrences<br/>security_threat: 36 / 36<br/>analyst_posture: 18 / 18<br/>conversational_sentiment: 2 / 2<br/>(skip-if-neutral)")]
+    Telemetry[/free for telemetry sinks/]
+
+    UI -->|POST /run/stream| Graph
+    Graph -->|Phase 0: POST /v1/signals/extract| Babel
+    Babel -->|signals dict<br/>SYNC response| Graph
+    Graph -->|continues LangGraph<br/>retrieval · synthesis · …<br/>SSE token stream| UI
+
+    Babel -.->|fire-and-forget<br/>babel.signals.extracted<br/>(per family × contributor)| Bus
+    Babel -.->|fire-and-forget<br/>babel.signals.fused<br/>(aggregate per request)| Bus
+
+    Bus -->|XREADGROUP| Persister
+    Bus -.->|babel.signals.fused| Telemetry
+
+    Persister -->|UPSERT| PG
+
+    classDef new fill:#e8f5e9,stroke:#43a047,stroke-width:2px;
+    classDef bus fill:#fff3e0,stroke:#fb8c00,stroke-width:2px;
+    classDef db fill:#e3f2fd,stroke:#1e88e5,stroke-width:2px;
+    class Persister new;
+    class Bus bus;
+    class PG db;
+```
+
+Sample row counts shown above are from a few hours of dev-stack chat traffic — not production numbers. The `cache effect` on the language family (3× occurrences vs unique rows) is the upsert-merge incrementing `occurrences` whenever the same `text_hash` recurs through the cascade.
+
 ## Event contract (Cognitive Bus)
 
 Canonical channels (declared in `vitruvyan_core/core/cognitive/babel_gardens/events/__init__.py`):
