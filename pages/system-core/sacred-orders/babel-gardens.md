@@ -111,24 +111,24 @@ The full flow from the user's request through Babel, the Cognitive Bus, and into
 flowchart TD
     UI([UI])
     Graph["api_graph<br/>/run/stream"]
-    Babel["api_babel_gardens<br/>POST /v1/signals/extract<br/>(N contributors run concurrently)"]
+    Babel["api_babel_gardens<br/>POST /v1/signals/extract<br/>N contributors run concurrently"]
     Bus[("Cognitive Bus<br/>Redis Streams")]
-    Persister["signal_observations_persister<br/>──────<br/>consumer group: signal_observations<br/>UPSERT on (text_hash, family, contributor)<br/>ACK per event · no redelivery loop<br/>drain_pel safety net at boot"]
-    PG[(PostgreSQL · signal_observations)]
-    Telemetry[/free for telemetry sinks/]
+    Persister["signal_observations_persister<br/>──────<br/>consumer group: signal_observations<br/>UPSERT on text_hash + family + contributor<br/>ACK per event, no redelivery loop<br/>drain_pel safety net at boot"]
+    PG[("PostgreSQL — signal_observations")]
+    Telemetry["free for telemetry sinks"]
 
-    UI -->|POST /run/stream| Graph
-    Graph -->|Phase 0: POST /v1/signals/extract| Babel
-    Babel -->|signals dict<br/>SYNC response| Graph
-    Graph -->|continues LangGraph<br/>retrieval · synthesis · …<br/>SSE token stream| UI
+    UI -->|"POST /run/stream"| Graph
+    Graph -->|"Phase 0: POST /v1/signals/extract"| Babel
+    Babel -->|"signals dict<br/>SYNC response"| Graph
+    Graph -->|"continues LangGraph<br/>retrieval, synthesis, ...<br/>SSE token stream"| UI
 
-    Babel -.->|fire-and-forget<br/>babel.signals.extracted<br/>(per family × contributor)| Bus
-    Babel -.->|fire-and-forget<br/>babel.signals.fused<br/>(aggregate per request)| Bus
+    Babel -.->|"fire-and-forget<br/>babel.signals.extracted<br/>per family x contributor"| Bus
+    Babel -.->|"fire-and-forget<br/>babel.signals.fused<br/>aggregate per request"| Bus
 
-    Bus -->|XREADGROUP| Persister
-    Bus -.->|babel.signals.fused| Telemetry
+    Bus -->|"XREADGROUP"| Persister
+    Bus -.->|"babel.signals.fused"| Telemetry
 
-    Persister -->|UPSERT| PG
+    Persister -->|"UPSERT"| PG
 
     classDef bus fill:#fff3e0,stroke:#fb8c00,stroke-width:2px;
     classDef db fill:#e3f2fd,stroke:#1e88e5,stroke-width:2px;
