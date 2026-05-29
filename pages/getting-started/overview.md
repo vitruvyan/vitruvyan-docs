@@ -64,7 +64,7 @@ graph TB
 
     subgraph DISCOURSE["💬 DISCOURSE — Conversational Layer"]
         direction TB
-        BABEL["Babel Gardens<br/><i>semantic fusion<br/>sentiment · embeddings<br/>84 languages</i>"]
+        BABEL["Babel Gardens<br/><i>4 signal families<br/>language · threat · posture · sentiment<br/>~100 languages (EmbeddingGemma)</i>"]
         WEAVERS["Pattern Weavers<br/><i>contextual enrichment<br/>vague → structured</i>"]
         VEE["VEE<br/><i>3-level explainability</i>"]
         CAN["CAN Node<br/><i>conversational response</i>"]
@@ -155,7 +155,7 @@ Two canonical storage systems with **mandatory access patterns**:
 
 ### 4. Discourse — *"How do I explain this?"*
 
-- **Babel Gardens** — Multilingual semantic fusion engine (84 languages). Combines multiple AI models (FinBERT, Gemma, MiniLM) into unified semantic representations. Handles sentiment analysis, language detection, and embedding generation through a single API.
+- **Babel Gardens** — Sacred Order #2 (Perception). Extracts four signal families from every input via a single `POST /v1/signals/extract` call running contributors concurrently: **language** (cascade Unicode → Qdrant/EmbeddingGemma → cache → LLM, ~100 languages), **security_threat** (SecBERT + LLM-as-classifier for MITRE phase, target asset, compliance), **analyst_posture** (operational_urgency, stance, assertion_confidence — replaces "sentiment" in security context), and an optional **conversational_sentiment** (skip-if-neutral). Every signal carries an explainability_trace and is emitted on the Cognitive Bus.
 
 - **Pattern Weavers** — Contextual enrichment via vector search. Transforms vague human queries into structured context: *"analyze European banks"* becomes `{concepts: ["Banking"], regions: ["Europe"], countries: [IT, FR, DE...]}`. Reduces conversational friction by 50-66%.
 
@@ -207,7 +207,7 @@ Consumer ← StreamBus.consume("channel.name", group, consumer_id)
          bus.acknowledge(event)  ← mandatory
 ```
 
-Events use dot notation (`codex.discovery.mapped`, `babel.sentiment.fused`) and carry: `event_id`, `event_type`, `causation_id` (optional, for causal chains), `timestamp`, `data`, `metadata`.
+Events use dot notation (`codex.discovery.mapped`, `babel.signals.extracted`, `babel.signals.fused`) and carry: `event_id`, `event_type`, `causation_id` (optional, for causal chains), `timestamp`, `data`, `metadata`.
 
 ---
 

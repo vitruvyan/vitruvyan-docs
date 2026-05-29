@@ -94,7 +94,7 @@ A single LLM call produces the full `ComprehensionResult`. The prompt is assembl
 | Section | Owner | Produces | Example |
 |---------|-------|----------|---------|
 | Ontology prompt | Pattern Weavers | `OntologyPayload` — gate, entities, intent, topics | Entity types, intent vocabulary, gate rules |
-| Semantics prompt | Babel Gardens | `SemanticPayload` — sentiment, emotion, linguistic | Sentiment labels, emotion taxonomy, register detection |
+| Semantics prompt | Babel Gardens | `SemanticPayload` / signal families — analyst posture, conversational sentiment, language | Stance enum, urgency/confidence ranges, language enum (ISO 639-1). Note: "emotion" was retired in v3.0 in favor of analyst_posture (urgency + stance + assertion_confidence). |
 
 Why a single call? Because context flows between sections. Knowing that "Apple" is a ticker (ontology) informs that "crashed" means a stock decline, not a physical impact (semantics). Two separate calls would lose this cross-domain awareness.
 
@@ -104,8 +104,7 @@ Specialized models add domain-calibrated signals that complement the LLM's gener
 
 | Vertical | Model | Signals | Interface |
 |----------|-------|---------|-----------|
-| Finance | FinBERT | `sentiment_valence`, `market_fear_index`, `volatility_perception` | `ISignalContributor` |
-| Security | SecBERT | *(to be defined)* | `ISignalContributor` |
+| Security (aicomsec, live) | SecBERT (numeric) + gpt-4o-mini (5 enum) | `threat_severity`, `exploit_imminence`, `attack_surface_exposure`, `threat_type`, `attack_phase` (MITRE), `target_asset`, `mitigation_urgency`, `compliance_implication` (multi-enum) | `ISignalContributor` (`SecBERTContributor`, `SecurityThreatEnumsContributor`) |
 | Healthcare | BioBERT | *(to be defined)* | `ISignalContributor` |
 
 Layer 2 models are registered via `SignalContributorRegistry` and produce `SignalEvidence` objects — typed, confidence-scored, with full extraction traces.

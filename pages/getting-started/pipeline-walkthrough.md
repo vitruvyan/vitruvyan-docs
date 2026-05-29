@@ -40,7 +40,7 @@ sequenceDiagram
     BUS->>BBL: consume codex.discovery.mapped
     BBL->>PG: write semantic/sentiment enrichment
     BBL->>QD: write semantic vectors
-    BBL->>BUS: publish babel.sentiment.fused
+    BBL->>BUS: publish babel.signals.extracted + babel.signals.fused
     BUS->>VLT: consume enrichment event
     VLT->>PG: immutable archive entry
 ```
@@ -57,7 +57,7 @@ sequenceDiagram
     participant EEX as Early Exit (v1.4.0)
     participant WVR as Pattern Weavers
     participant ENT as Entity Resolver
-    participant EMO as Babel Emotion
+    participant P0 as Phase 0 — Babel /v1/signals/extract
     participant SEM as Semantic Grounding (VSGS)
     participant PRM as Params Extraction
     participant DEC as Decide
@@ -78,8 +78,8 @@ sequenceDiagram
     else Complex intent
         INT->>WVR: intent + language + context
         WVR->>ENT: semantic context
-        ENT->>EMO: resolved entities/context
-        EMO->>SEM: emotional/context signals
+        ENT->>P0: resolved entities/context (pre-graph: P0 ran before)
+        P0->>SEM: 4 signal families (language, security_threat, analyst_posture, sentiment)
         SEM->>PRM: grounded context
         PRM->>DEC: execution-ready state
         DEC->>EXE: route execution
