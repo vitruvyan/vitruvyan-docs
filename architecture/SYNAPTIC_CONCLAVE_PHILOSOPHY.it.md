@@ -1,7 +1,9 @@
 # Synaptic Conclave — Visione filosofica e architetturale
 
+> 📜 **Documento storico** (22 maggio 2026). Superato e ampliato da [Vitruvyan Neural Architecture](./VITRUVYAN_NEURAL_ARCHITECTURE.it.md) (30 maggio 2026), che eredita la tesi del bus come differenziatore e aggiunge lo strato corticale (Cortex Atlas) come forma operativa del consolidamento mnesico promesso al §3.3. Mantenuto qui come predecessore e archivio della conversazione che ha originato la visione.
+
 **Data**: 22 maggio 2026
-**Stato**: Documento di visione (vivente, da aggiornare con l'evoluzione del framework)
+**Stato**: Documento storico — predecessore di [VITRUVYAN_NEURAL_ARCHITECTURE.it.md](./VITRUVYAN_NEURAL_ARCHITECTURE.it.md)
 **Origine**: Dialogo Davide Baldoni ↔ Claude — sintesi di una conversazione sulla natura del bus sinattico e sul suo ruolo come differenziatore di Vitruvyan rispetto al panorama AI/RAG contemporaneo.
 
 ---
