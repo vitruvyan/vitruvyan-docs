@@ -13,292 +13,292 @@ tags:
 
 > *Cortex Atlas does not model the world. It models the system's experience of the world.*
 
-**Stato del documento**: riferimento architetturale (vivente)
-**Versione di riferimento**: vitruvyan-core v1.29.0 (30 maggio 2026)
-**Predecessore**: [Synaptic Conclave — Visione filosofica e architetturale](./synaptic-conclave-philosophy) (22 maggio 2026)
+**Document status**: architectural reference (living)
+**Reference version**: vitruvyan-core v1.29.0 (30 May 2026)
+**Predecessor**: [Synaptic Conclave — Visione filosofica e architetturale](./synaptic-conclave-philosophy) (22 May 2026)
 
 ---
 
 ## Abstract
 
-Vitruvyan è un framework cognitivo per sistemi software che persegue **intelligenza distribuita coordinata** invece di intelligenza monolitica concentrata. La sua architettura è organizzata in tre strati neurali — sinaptico, corticale, neuro-endocrino — modellati a partire da principi documentati nelle neuroscienze e nei sistemi biologici distribuiti (Hebb, 1949; Godfrey-Smith, 2016; Hutchins, 1995). Il primo strato (Synaptic Conclave) è operativo e fornisce trasporto di eventi semanticamente ricchi attraverso un bus asincrono. Il secondo strato (**Cortex Atlas**, introdotto in v1.29.0 come scaffold dormante) implementa il consolidamento mnesico: trasforma la co-attivazione ripetuta osservata sul bus in struttura associativa permanente attraverso un meccanismo hebbiano. Il terzo strato (neuro-endocrino) è progettato ma non implementato. Questo documento articola i fondamenti scientifici, la motivazione architetturale, il design dello strato corticale, il razionale per cui esso non coincide con una Knowledge Graph o un GraphRAG, e i criteri disciplinari che governano la sua attivazione.
+Vitruvyan is a cognitive framework for software systems pursuing **coordinated distributed intelligence** rather than concentrated monolithic intelligence. Its architecture is organized into three neural layers — synaptic, cortical, neuro-endocrine — modelled on principles documented in neuroscience and biological distributed systems (Hebb, 1949; Godfrey-Smith, 2016; Hutchins, 1995). The first layer (Synaptic Conclave) is operational and provides transport of semantically rich events through an asynchronous bus. The second layer (**Cortex Atlas**, introduced in v1.29.0 as a dormant scaffold) implements mnemonic consolidation: it transforms repeated co-activation observed on the bus into persistent associative structure through a hebbian mechanism. The third layer (neuro-endocrine) is designed but not implemented. This document articulates the scientific foundations, the architectural motivation, the design of the cortical layer, the rationale for why it does not coincide with a Knowledge Graph or a GraphRAG, and the disciplinary criteria that govern its activation.
 
 ---
 
-## 1. Motivazione
+## 1. Motivation
 
-### 1.1 Il problema architetturale
+### 1.1 The architectural problem
 
-I sistemi AI contemporanei si polarizzano lungo due assi:
+Contemporary AI systems polarise along two axes:
 
-- **Monolitici**: un singolo modello (LLM) accentra capacità di linguaggio, ragionamento, memoria e decisione. La cognizione è prodotta da scala (parametri, compute, dati di addestramento).
-- **Idraulici**: pipeline lineari (retrieve → rank → synthesize → respond) in cui i dati scorrono dalla sorgente alla risposta. La cognizione è prodotta da concatenazione di stadi specializzati.
+- **Monolithic**: a single model (LLM) concentrates language, reasoning, memory and decision capabilities. Cognition is produced by scale (parameters, compute, training data).
+- **Hydraulic**: linear pipelines (retrieve → rank → synthesize → respond) in which data flows from source to answer. Cognition is produced by concatenation of specialised stages.
 
-Entrambi i paradigmi presentano limiti strutturali quando il sistema deve essere **auditabile, governato, evolvibile e responsabile** delle proprie decisioni:
+Both paradigms exhibit structural limitations when the system must be **auditable, governed, evolvable and accountable** for its decisions:
 
-| Limite | Modello monolitico | Pipeline idraulica |
+| Limitation | Monolithic model | Hydraulic pipeline |
 |---|---|---|
-| Auditabilità | Scatola nera per costruzione | Stati intermedi effimeri |
-| Memoria di sé | Inesistente | Inesistente |
-| Estensibilità | Re-training | Modifica della pipeline |
-| Governance | Impossibile dall'interno | Impossibile dall'interno |
-| Costo cognitivo | Cresce con la scala | Cresce con la profondità |
+| Auditability | Black box by construction | Ephemeral intermediate states |
+| Self-memory | Absent | Absent |
+| Extensibility | Re-training | Pipeline modification |
+| Governance | Impossible from within | Impossible from within |
+| Cognitive cost | Grows with scale | Grows with depth |
 
-### 1.2 Il paradigma alternativo
+### 1.2 The alternative paradigm
 
-La biologia offre un terzo paradigma. Il cervello dei vertebrati, i sistemi nervosi distribuiti del polpo (Godfrey-Smith, 2016), le reti miceliali (Simard, 2018) e i sistemi sociali umani in attività coordinata (Hutchins, 1995) condividono una struttura: **molte unità locali autonome che comunicano attraverso un mezzo condiviso, producendo cognizione globale come proprietà emergente della coordinazione**.
+Biology offers a third paradigm. The vertebrate brain, the distributed nervous system of the octopus (Godfrey-Smith, 2016), mycorrhizal networks (Simard, 2018) and human social systems in coordinated activity (Hutchins, 1995) share a structure: **many autonomous local units communicating through a shared medium, producing global cognition as an emergent property of coordination**.
 
-Vitruvyan è la traduzione computazionale di questo paradigma. Non è un modello cognitivo né una pipeline cognitiva: è un **mezzo cognitivo** — un bus su cui agenti specializzati (Sacred Orders) emettono e consumano eventi, e attraverso cui la cognizione globale emerge dalla loro coordinazione.
+Vitruvyan is the computational translation of this paradigm. It is neither a cognitive model nor a cognitive pipeline: it is a **cognitive medium** — a bus over which specialised agents (Sacred Orders) emit and consume events, and through which global cognition emerges from their coordination.
 
 ---
 
-## 2. Fondamenti scientifici
+## 2. Scientific foundations
 
-L'architettura neurale di Vitruvyan poggia su principi documentati in letteratura. Ciascun principio è tradotto in un meccanismo software specifico.
+The neural architecture of Vitruvyan rests on principles documented in the literature. Each principle is translated into a specific software mechanism.
 
 ### 2.1 Hebbian learning (Hebb, 1949)
 
 > *"Cells that fire together, wire together."*
 
-Quando due neuroni si attivano in correlazione temporale, la sinapsi che li connette si rafforza. La struttura associativa del cervello non è programmata: emerge dall'osservazione ripetuta di co-attivazioni.
+When two neurons activate in temporal correlation, the synapse connecting them strengthens. The associative structure of the brain is not programmed: it emerges from repeated observation of co-activations.
 
-**Traduzione in Vitruvyan**: lo strato corticale (Cortex Atlas) registra co-attivazioni fra entità canoniche osservate nello stesso `trace_id`, persiste l'osservazione come "edge" con un contatore di occorrenze (tonus sinaptico), e applica decadimento temporale per pruning automatico.
+**Translation in Vitruvyan**: the cortical layer (Cortex Atlas) records co-activations between canonical entities observed in the same `trace_id`, persists the observation as an "edge" with an occurrence counter (synaptic tonus), and applies temporal decay for automatic pruning.
 
 ### 2.2 Cell assemblies (Hebb, 1949; Buzsáki, 2010)
 
-Gruppi di neuroni che si co-attivano formano "assembly" — strutture di alto livello che rappresentano concetti, episodi, schemi motori. L'assembly non è un singolo neurone: è un pattern emergente di correlazione.
+Groups of co-activating neurons form "assemblies" — high-level structures that represent concepts, episodes, motor schemata. The assembly is not a single neuron: it is an emergent pattern of correlation.
 
-**Traduzione**: il meccanismo di consolidamento (M3) di Cortex Atlas promuove cluster di edge stabili in `Assembly` — strutture composite identificate da coesione + persistenza temporale, non da clustering grafico puro.
+**Translation**: the consolidation mechanism (M3) of Cortex Atlas promotes clusters of stable edges into `Assembly` — composite structures identified by cohesion + temporal persistence, not by pure graph clustering.
 
 ### 2.3 Distributed cognition (Hutchins, 1995)
 
-La cognizione non risiede in un singolo agente ma è distribuita su agenti multipli, artefatti e canali di comunicazione. La nave navigata da Hutchins (1995, *Cognition in the Wild*) non è guidata da un capitano cognitivamente isolato: è il sistema "equipaggio + strumenti + protocolli" a navigare.
+Cognition does not reside in a single agent but is distributed across multiple agents, artifacts and communication channels. The ship navigated by Hutchins (1995, *Cognition in the Wild*) is not guided by a cognitively isolated captain: the system "crew + instruments + protocols" navigates.
 
-**Traduzione**: i Sacred Orders (Pattern Weavers, Babel Gardens, Vault Keepers, Codex Hunters, Orthodoxy Wardens, Memory Orders) sono agenti specializzati che condividono il bus come ambiente cognitivo. Nessun Sacred Order è "il cervello"; la cognizione globale emerge dalla loro coordinazione asincrona.
+**Translation**: the Sacred Orders (Pattern Weavers, Babel Gardens, Vault Keepers, Codex Hunters, Orthodoxy Wardens, Memory Orders) are specialised agents sharing the bus as cognitive environment. No Sacred Order is "the brain"; global cognition emerges from their asynchronous coordination.
 
 ### 2.4 Octopus cognition (Godfrey-Smith, 2016)
 
-Il polpo possiede ~500 milioni di neuroni, di cui due terzi distribuiti nelle braccia. Ogni braccio risolve problemi locali senza intervento del cervello centrale. La cognizione è radicalmente distribuita ma globalmente coordinata.
+The octopus possesses ~500 million neurons, two thirds of which are distributed in the arms. Each arm solves local problems without intervention from the central brain. Cognition is radically distributed yet globally coordinated.
 
-**Traduzione**: ogni Sacred Order ha autonomia decisionale locale (e.g., Pattern Weavers decide le canonicalizzazioni senza chiedere permesso a un orchestratore centrale). La coordinazione globale emerge dagli eventi che ciascuno emette sul bus.
+**Translation**: each Sacred Order has local decisional autonomy (e.g., Pattern Weavers decides canonicalisations without permission from a central orchestrator). Global coordination emerges from the events each emits on the bus.
 
 ### 2.5 Synaptic plasticity (Bliss & Lømo, 1973; Citri & Malenka, 2008)
 
-I parametri di una sinapsi (efficacia, soglia, persistenza) non sono fissi: si adattano in risposta all'attività. Long-term potentiation e long-term depression sono i meccanismi fondamentali dell'apprendimento.
+The parameters of a synapse (efficacy, threshold, persistence) are not fixed: they adapt in response to activity. Long-term potentiation and long-term depression are the fundamental mechanisms of learning.
 
-**Traduzione**: il framework `PlasticityManager` (core/synaptic_conclave/plasticity/) tracca parametri scalari di consumer (e.g., decay rate, consolidation threshold) come `ParameterTrajectory` — sequenze temporali soggette a rilevamento di anomalia (oscillazione, drift, stagnazione, instabilità, divergenza). Cortex Atlas M2/M4 leggono e propongono modifiche a questi parametri via Plasticity, non implementano una propria modulazione.
+**Translation**: the `PlasticityManager` framework (core/synaptic_conclave/plasticity/) tracks scalar parameters of consumers (e.g., decay rate, consolidation threshold) as `ParameterTrajectory` — temporal sequences subject to anomaly detection (oscillation, drift, stagnation, instability, divergence). Cortex Atlas M2/M4 read and propose changes to these parameters through Plasticity, not through their own modulation mechanism.
 
 ### 2.6 Memory consolidation (Squire, 1992; Diekelmann & Born, 2010)
 
-La memoria episodica viene consolidata dall'ippocampo alla neocorteccia attraverso processi di replay durante il sonno. La memoria di lavoro (eventi) si trasforma in memoria di lungo termine (struttura) attraverso un meccanismo dedicato e temporalmente separato.
+Episodic memory is consolidated from hippocampus to neocortex through replay processes during sleep. Working memory (events) transforms into long-term memory (structure) through a dedicated, temporally separated mechanism.
 
-**Traduzione**: M3 (Consolidator) di Cortex Atlas opera come processo notturno (batch periodico) che ispeziona gli edge stabili e li promuove in Assembly. La consolidazione avviene su scala temporale diversa dall'osservazione (M1), riflettendo la separazione biologica fra acquisizione e consolidamento.
+**Translation**: M3 (Consolidator) of Cortex Atlas operates as a nightly process (periodic batch) that inspects stable edges and promotes them into Assemblies. Consolidation occurs on a different time scale from observation (M1), reflecting the biological separation between acquisition and consolidation.
 
 ### 2.7 Neuromodulation (Marder, 2012; Avery & Krichmar, 2017)
 
-I sistemi neuromodulatori (dopamina, acetilcolina, noradrenalina, serotonina) non trasmettono informazione punto-a-punto: modulano stati globali del sistema — vigilanza, esplorazione vs sfruttamento, ritmi circadiani. Operano su scale temporali più lunghe e in modalità non-numeriche.
+Neuromodulatory systems (dopamine, acetylcholine, noradrenaline, serotonin) do not transmit point-to-point information: they modulate global system states — vigilance, exploration vs exploitation, circadian rhythms. They operate on longer time scales and in non-numerical modes.
 
-**Traduzione**: il terzo strato (neuro-endocrino) è progettato per i context modulator multi-stato (e.g., "phase di esplorazione" vs "phase di consolidamento"). È esplicitamente parcheggiato — la sua implementazione richiede estensione di `PlasticityObserver` oltre il modello scalare e non è opportuna prima che gli strati inferiori siano stabili.
+**Translation**: the third layer (neuro-endocrine) is designed for multi-state context modulators (e.g., "exploration phase" vs "consolidation phase"). It is explicitly parked — its implementation requires extending `PlasticityObserver` beyond the scalar model and is not appropriate before the lower layers are stable.
 
 ---
 
-## 3. L'architettura neurale a tre strati
+## 3. The three-layer neural architecture
 
-Vitruvyan replica la stratificazione biologica con tre strati architetturali, ciascuno con un substrato fisico, una funzione cognitiva, una scala temporale e una maturità di sviluppo.
+Vitruvyan replicates biological stratification through three architectural layers, each with a physical substrate, a cognitive function, a temporal scale and a development maturity.
 
-| Strato | Funzione cognitiva | Substrato | Scala temporale | Stato in v1.29.0 |
+| Layer | Cognitive function | Substrate | Temporal scale | Status in v1.29.0 |
 |---|---|---|---|---|
-| **Sinaptico** (Synaptic Conclave) | Trasmissione di eventi semanticamente ricchi | Redis Streams + tabella `bus_events` | millisecondi-secondi | Produzione |
-| **Corticale** (Cortex Atlas) | Consolidamento mnesico, formazione di struttura associativa | PostgreSQL (`cortex_atlas_edges`, `cortex_atlas_assemblies`) | ore-giorni | Scaffold dormant |
-| **Neuro-endocrino** | Modulazione comportamentale, stati sistemici discreti | Multi-state context modulators | giorni-settimane | Progettato (G.4+) |
+| **Synaptic** (Synaptic Conclave) | Transmission of semantically rich events | Redis Streams + `bus_events` table | milliseconds–seconds | Production |
+| **Cortical** (Cortex Atlas) | Mnemonic consolidation, formation of associative structure | PostgreSQL (`cortex_atlas_edges`, `cortex_atlas_assemblies`) | hours–days | Dormant scaffold |
+| **Neuro-endocrine** | Behavioural modulation, discrete system states | Multi-state context modulators | days–weeks | Designed (G.4+) |
 
-La gradazione temporale dei tre strati è un vincolo architetturale, non una contingenza implementativa. Tentare di accendere lo strato corticale prima che il substrato sinaptico produca segnale sufficiente — o lo strato neuro-endocrino prima che la corteccia sia stabile — riproduce il fallimento osservato in modelli artificiali che saltano stadi di maturazione: il sistema produce output sintatticamente plausibili ma semanticamente vuoti.
-
----
-
-## 4. Strato sinaptico — il bus come differenziatore
-
-Il dettaglio filosofico e operativo dello strato sinaptico è trattato nel [documento predecessore](./synaptic-conclave-philosophy). In sintesi:
-
-- Il bus (Redis Streams + `bus_events`) è il **mezzo cognitivo** del sistema, non un canale di logging.
-- Ogni Sacred Order emette eventi semanticamente ricchi (`ontology.entity.resolved`, `babel.signals.extracted`, `orthodoxy.verdict.issued`, ecc.).
-- L'auditabilità è proprietà emergente: ogni decisione del sistema è ricostruibile dalla concatenazione di eventi che l'ha prodotta.
-- La regola operativa fondamentale: **ogni evento nuovo deve avere un consumer designato**. Senza consumer è logging travestito.
-
-Lo strato sinaptico è condizione necessaria ma non sufficiente. Il bus accumula eventi; serve un meccanismo che li trasformi in **struttura**. Questo è il ruolo dello strato corticale.
+The temporal gradation of the three layers is an architectural constraint, not an implementation contingency. Attempting to activate the cortical layer before the synaptic substrate produces sufficient signal — or the neuro-endocrine layer before the cortex is stable — reproduces the failure mode observed in artificial models that skip maturation stages: the system produces syntactically plausible but semantically empty output.
 
 ---
 
-## 5. Strato corticale — Cortex Atlas
+## 4. Synaptic layer — the bus as differentiator
 
-Cortex Atlas è introdotto in vitruvyan-core v1.29.0 come scaffold dormante (vedi [`core/cognitive/cortex_atlas/`](https://github.com/vitruvyan/vitruvyan-core/tree/main/vitruvyan_core/core/cognitive/cortex_atlas)). Implementa il consolidamento mnesico attraverso quattro meccaniche (M1-M4) governate da un gate di attivazione (M0).
+The philosophical and operational detail of the synaptic layer is treated in the [predecessor document](./synaptic-conclave-philosophy). In summary:
 
-### 5.1 Le cinque meccaniche
+- The bus (Redis Streams + `bus_events`) is the **cognitive medium** of the system, not a logging channel.
+- Each Sacred Order emits semantically rich events (`ontology.entity.resolved`, `babel.signals.extracted`, `orthodoxy.verdict.issued`, etc.).
+- Auditability is an emergent property: every system decision is reconstructible from the concatenation of events that produced it.
+- The fundamental operational rule: **every new event must have a designated consumer**. Without a consumer it is logging in disguise.
 
-| Mech | Nome | Responsabilità | Owner di policy | Validazione |
+The synaptic layer is a necessary but not sufficient condition. The bus accumulates events; what is needed is a mechanism that transforms them into **structure**. This is the role of the cortical layer.
+
+---
+
+## 5. Cortical layer — Cortex Atlas
+
+Cortex Atlas is introduced in vitruvyan-core v1.29.0 as a dormant scaffold (see [`core/cognitive/cortex_atlas/`](https://github.com/vitruvyan/vitruvyan-core/tree/main/vitruvyan_core/core/cognitive/cortex_atlas)). It implements mnemonic consolidation through four mechanisms (M1–M4) governed by an activation gate (M0).
+
+### 5.1 The five mechanisms
+
+| Mech | Name | Responsibility | Policy owner | Validation |
 |---|---|---|---|---|
-| **M0** | `AtlasActivationPolicy` | Gate disciplinare — protegge dall'attivazione prematura | Atlas | n/a |
-| **M1** | `EdgeObserver` | Detect co-firing dentro un `trace_id`, UPSERT su `cortex_atlas_edges` | n/a (puramente statistica) | none |
-| **M2** | `DecayManager` | Decay del tonus degli edge, pruning sotto floor | `PlasticityManager` | n/a |
-| **M3** | `Consolidator` | Promuove edge stabili in `Assembly` candidate | n/a | `Orthodoxy Wardens` (verdict per candidate) |
-| **M4** | `ModulatorEmitter` | Propone aggiustamenti scalari di policy | `PlasticityManager` (dispatch) | `OutcomeTracker` (retroattivo) |
+| **M0** | `AtlasActivationPolicy` | Disciplinary gate — protects against premature activation | Atlas | n/a |
+| **M1** | `EdgeObserver` | Detect co-firing within a `trace_id`, UPSERT into `cortex_atlas_edges` | n/a (purely statistical) | none |
+| **M2** | `DecayManager` | Decay edge tonus, prune below floor | `PlasticityManager` | n/a |
+| **M3** | `Consolidator` | Promote stable edges to `Assembly` candidates | n/a | `Orthodoxy Wardens` (verdict per candidate) |
+| **M4** | `ModulatorEmitter` | Propose scalar policy adjustments | `PlasticityManager` (dispatch) | `OutcomeTracker` (retrospective) |
 
-### 5.2 Tre assi architetturali
+### 5.2 Three architectural axes
 
-Il design dello scaffold è governato da tre principi non negoziabili. Ogni modifica futura deve preservarli.
+The design of the scaffold is governed by three non-negotiable principles. Every future modification must preserve them.
 
 #### 5.2.1 Dormant by default
 
-L'attivazione richiede due gate concorrenti:
+Activation requires two concurrent gates:
 
 - **Feature flag**: `CORTEX_ATLAS_ENABLED` (env var, default `false`)
-- **Activation policy**: `AtlasActivationPolicy.is_ready_to_activate()` deve ritornare `ready=True`
+- **Activation policy**: `AtlasActivationPolicy.is_ready_to_activate()` must return `ready=True`
 
-Entrambi devono essere verdi. La policy verifica quattro sub-criteri (volume, recurrence, quality, phase_d). Se anche uno solo dei criteri non è soddisfatto, il sistema rifiuta di accendere e dichiara *perché* attraverso una `ActivationDecision` strutturata.
+Both must be green. The policy verifies four sub-criteria (volume, recurrence, quality, phase_d). If even one criterion is unmet, the system refuses to activate and declares *why* through a structured `ActivationDecision`.
 
-La motivazione di questa disciplina è documentata in letteratura: i sistemi associativi attivati prima della maturazione del substrato producono pattern spurii che non corrispondono a struttura semantica reale (overfitting su sample insufficiente). La policy di attivazione è equivalente al ruolo dei "critical periods" nella maturazione neurale (Hensch, 2005): finestre in cui il sistema è pronto a strutturarsi solo a fronte di stimolazione appropriata.
+The motivation for this discipline is documented in the literature: associative systems activated before substrate maturation produce spurious patterns that do not correspond to real semantic structure (overfitting on insufficient sample). The activation policy is equivalent to the role of "critical periods" in neural maturation (Hensch, 2005): windows in which the system is ready to structure itself only in the presence of appropriate stimulation.
 
 #### 5.2.2 Statistical, not semantic
 
-Cortex Atlas **non propone canonical names**. L'autorità semantica appartiene a Pattern Weavers; Atlas conta esclusivamente le co-attivazioni fra canonical già esistenti.
+Cortex Atlas **does not propose canonical names**. Semantic authority belongs to Pattern Weavers; Atlas exclusively counts co-activations between canonicals that already exist.
 
-> Pattern Weavers: *X è canonical.*
-> Cortex Atlas: *X co-attiva con Y.*
+> Pattern Weavers: *X is canonical.*
+> Cortex Atlas: *X co-activates with Y.*
 
-Questa separazione è una proprietà architettonica, non un'opinione. Pattern Weavers e Cortex Atlas vivono in domini di autorità disgiunti — semantico vs statistico — e per costruzione non possono entrare in conflitto territoriale. Tradotto in termini biologici: Pattern Weavers è equivalente al ruolo dell'area di Wernicke (riconoscimento linguistico-semantico) e Cortex Atlas all'ippocampo (consolidamento associativo). Sono cooperanti, non sostituibili.
+This separation is an architectural property, not an opinion. Pattern Weavers and Cortex Atlas live in disjoint domains of authority — semantic vs statistical — and by construction cannot enter territorial conflict. Translated into biological terms: Pattern Weavers is equivalent to the role of Wernicke's area (linguistic-semantic recognition) and Cortex Atlas to the hippocampus (associative consolidation). They are cooperating, not substitutable.
 
 #### 5.2.3 Reuses Plasticity, Orthodoxy and Memory Orders
 
-Cortex Atlas è **tessuto connettivo**, non un nuovo organo. La forma operativa di questo principio:
+Cortex Atlas is **connective tissue**, not a new organ. The operational form of this principle:
 
-| Responsabilità | Owner | Modalità di delega |
+| Responsibility | Owner | Mode of delegation |
 |---|---|---|
-| Decay rate / floor threshold (M2) | `PlasticityManager` | Letto come parametro tramite `PlasticityObserver` trajectory |
-| Validazione di assembly promosse (M3) | `Orthodoxy Wardens` | M3 emette `AssemblyValidationRequest`, Orthodoxy ritorna verdict |
-| Dispatch di modulators (M4) | `PlasticityManager` | M4 chiama `plasticity_manager.propose_adjustment()`, **non emette stream proprio** |
-| Health metric dello strato corticale | `Memory Orders` (terzo analyzer) | Atlas espone tabelle, Memory Orders le legge |
+| Decay rate / floor threshold (M2) | `PlasticityManager` | Read as parameter via `PlasticityObserver` trajectory |
+| Validation of promoted assemblies (M3) | `Orthodoxy Wardens` | M3 emits `AssemblyValidationRequest`, Orthodoxy returns verdict |
+| Modulator dispatch (M4) | `PlasticityManager` | M4 calls `plasticity_manager.propose_adjustment()`, **emits no stream of its own** |
+| Cortical-layer health metric | `Memory Orders` (third analyzer) | Atlas exposes tables, Memory Orders reads them |
 
-Cortex Atlas G.1, attivandosi, diventa il **primo consumer reale** di `PlasticityManager` (oggi dormiente con 0 outcomes registrati). Il framework di plasticità viene validato attraverso uso, non attraverso dichiarazione.
+Cortex Atlas G.1, upon activation, becomes the **first real consumer** of `PlasticityManager` (today dormant with 0 outcomes recorded). The plasticity framework is validated through use, not through declaration.
 
 ---
 
-## 6. Perché non una Knowledge Graph
+## 6. Why not a Knowledge Graph
 
-L'introduzione di Cortex Atlas solleva legittimamente la domanda: *perché non utilizzare una Knowledge Graph esistente*?
+The introduction of Cortex Atlas legitimately raises the question: *why not use an existing Knowledge Graph?*
 
-La risposta è che Cortex Atlas e Knowledge Graph rispondono a domande diverse.
+The answer is that Cortex Atlas and Knowledge Graphs answer different questions.
 
-> Una **Knowledge Graph** modella *ciò che è in relazione* — la struttura del dominio.
-> **Cortex Atlas** modella *ciò che si attiva ripetutamente insieme* — la struttura dell'esperienza del sistema.
+> A **Knowledge Graph** models *what is related* — the structure of the domain.
+> **Cortex Atlas** models *what repeatedly activates together* — the structure of the system's experience.
 
 | | Knowledge Graph | Cortex Atlas |
 |---|---|---|
-| Modella | il dominio | l'esperienza del sistema sul dominio |
-| Sorgente di verità | tassonomia curata / ingestion | co-attivazione ripetuta sul bus |
-| Aggiornato da | processo editoriale | osservazione hebbiana automatica |
-| Possiede i canonical | sì | no (Pattern Weavers) |
-| Modalità di fallimento dominante | diventa stale | diventa rumoroso |
-| Costo di manutenzione | alto (editoriale continuo) | basso (autoregolato da decay) |
+| Models | the domain | the system's experience of the domain |
+| Source of truth | curated taxonomy / ingestion | repeated co-activation on the bus |
+| Updated by | editorial process | automatic hebbian observation |
+| Owns the canonicals | yes | no (Pattern Weavers) |
+| Dominant failure mode | becomes stale | becomes noisy |
+| Maintenance cost | high (continuous editorial) | low (auto-regulated by decay) |
 
-Esempio chiarificatore. Una KG di dominio security può affermare: *"CVE-2024-1234 è una vulnerabilità di tipo X che colpisce il sistema Y"*. Cortex Atlas, su un sistema che parla di sicurezza, può rilevare e affermare: *"ogni volta che il sistema parla di CVE-2024-1234, parla anche di ISO 27001 — sempre, in 87% dei trace"*. La KG dichiara una verità del dominio; Atlas dichiara una verità statistica del sistema. Sono fatti diversi, prodotti in modi diversi, utili per ragionamenti diversi.
+Clarifying example. A security-domain KG can state: *"CVE-2024-1234 is a vulnerability of type X affecting system Y"*. Cortex Atlas, on a system that talks about security, can detect and state: *"every time the system talks about CVE-2024-1234, it also talks about ISO 27001 — always, in 87% of traces"*. The KG declares a domain truth; Atlas declares a statistical truth of the system. These are different facts, produced in different ways, useful for different reasoning.
 
-I due meccanismi sono **complementari, non sostitutivi**. Un verticale può eseguire entrambi simultaneamente: la KG fornisce struttura semantica curata; Atlas fornisce evidenza statistica di uso effettivo. Quando divergono, la divergenza stessa è informazione (la KG cataloga concetti che il sistema non usa mai; il sistema usa associazioni che la KG non documenta).
+The two mechanisms are **complementary, not substitute**. A vertical can run both simultaneously: the KG provides curated semantic structure; Atlas provides statistical evidence of actual use. When they diverge, the divergence itself is information (the KG catalogues concepts the system never uses; the system uses associations the KG does not document).
 
 ---
 
-## 7. Perché non GraphRAG
+## 7. Why not GraphRAG
 
-GraphRAG (Edge et al., 2024) estende il paradigma RAG sostituendo l'indice vettoriale con un grafo di conoscenza. Migliora il recall su query che richiedono ragionamento multi-hop ma resta un'architettura **interrogativa**: l'utente chiede, il grafo risponde.
+GraphRAG (Edge et al., 2024) extends the RAG paradigm by replacing the vector index with a knowledge graph. It improves recall on queries requiring multi-hop reasoning but remains an **interrogative** architecture: the user asks, the graph answers.
 
 | | GraphRAG | Vitruvyan + Cortex Atlas |
 |---|---|---|
-| Paradigma | interrogativo (query-driven) | coordinativo (event-driven) |
-| Stato fra query | stateless (per design) | stateful (il bus persiste, la corteccia accumula) |
-| Memoria di sé | none | propriocezione (eventi sul sistema stesso) |
-| Auditabilità | tracing per singola query | proprietà emergente del bus |
-| Evoluzione del grafo | manuale (editorial) | automatica (hebbian) |
-| Costo per query | proporzionale alla profondità del traversal | indipendente dal traversal (la struttura è già consolidata) |
+| Paradigm | interrogative (query-driven) | coordinative (event-driven) |
+| State between queries | stateless (by design) | stateful (the bus persists, the cortex accumulates) |
+| Self-memory | none | proprioception (events about the system itself) |
+| Auditability | tracing per individual query | emergent property of the bus |
+| Graph evolution | manual (editorial) | automatic (hebbian) |
+| Cost per query | proportional to traversal depth | independent of traversal (structure is already consolidated) |
 
-GraphRAG può essere componente di un Vitruvyan vertical (un Sacred Order che fa retrieval su KG), ma non sostituisce l'architettura: rimane stadio di una pipeline. Cortex Atlas non è un retriever migliore — è un meccanismo che *osserva ciò che i retriever fanno* e ne estrae struttura.
-
----
-
-## 8. Perché non un LLM monolitico
-
-I large language model monolitici sono ottimizzati per **una funzione**: predire il prossimo token. Attraverso la scala raggiungono capacità emergenti notevoli, ma presentano limiti strutturali per sistemi che devono essere governati:
-
-| | LLM monolitico | Vitruvyan |
-|---|---|---|
-| Modalità di cognizione | unica (generative) | multipla (osservativa, generativa, valutativa, custodiale) |
-| Auditabilità della singola decisione | impossibile (parametri continui) | ricostruibile dalla concatenazione di eventi |
-| Estensione capacità | re-training | nuovo consumer sul bus |
-| Costo di sviluppo nuovo dominio | dataset + training pipeline | nuovo Sacred Order |
-| Governance del comportamento | system prompt (fragile) | Orthodoxy Wardens (audit attivo) |
-| Memoria persistente | context window (effimera) | bus + corteccia (permanente) |
-| Modalità di fallimento | hallucination (irrecuperabile) | drift di contratto (rilevabile via propriocezione) |
-
-Vitruvyan **utilizza** LLM (via `LLMAgent` core) come strumento per task linguistici delegabili — extraction, classificazione, sintesi. Non li tratta come motore cognitivo. La distinzione è equivalente, in biologia, a non confondere "la corteccia visiva" con "il sistema cognitivo del soggetto": la corteccia visiva è componente specializzato, il sistema cognitivo è l'insieme coordinato.
+GraphRAG can be a component of a Vitruvyan vertical (a Sacred Order that performs retrieval over a KG), but it does not substitute the architecture: it remains one stage of a pipeline. Cortex Atlas is not a better retriever — it is a mechanism that *observes what retrievers do* and extracts structure from it.
 
 ---
 
-## 9. Disciplina di attivazione
+## 8. Why not a monolithic LLM
 
-Lo scaffold v1.29.0 contiene `AtlasActivationPolicy` come stub: tutti i sub-gate ritornano `NotImplementedError` finché i criteri concreti non vengono implementati. La scelta è deliberata e disciplinare: i criteri saranno tarati empiricamente quando l'attivazione diventerà imminente, non da considerazioni a priori.
+Monolithic large language models are optimised for **one function**: predicting the next token. Through scale they reach notable emergent capabilities, but they exhibit structural limitations for systems that must be governed:
 
-Ciò che è fissato nello scaffold è la **struttura** dei criteri:
-
-| Gate | Cosa misura | Condizione di soddisfacimento |
+| | Monolithic LLM | Vitruvyan |
 |---|---|---|
-| **Volume** | co-firing events per giorno | Ingestion + extraction a scala produttiva |
-| **Recurrence** | average canonical recurrence | Substrato si muove sopra 1.00 (floor atomico osservato in v1.29.0) |
-| **Quality** | gold standard extraction validato | [aicomsec#32](https://github.com/vitruvyan/aicomsec/issues/32) Phase D chiuso |
-| **Phase D** | production hardening completo | [aicomsec#32](https://github.com/vitruvyan/aicomsec/issues/32) chiuso |
+| Mode of cognition | single (generative) | multiple (observational, generative, evaluative, custodial) |
+| Auditability of a single decision | impossible (continuous parameters) | reconstructible from event concatenation |
+| Capability extension | re-training | new bus consumer |
+| Cost of developing a new domain | dataset + training pipeline | new Sacred Order |
+| Behaviour governance | system prompt (fragile) | Orthodoxy Wardens (active audit) |
+| Persistent memory | context window (ephemeral) | bus + cortex (permanent) |
+| Failure mode | hallucination (unrecoverable) | contract drift (detectable via proprioception) |
 
-### 9.1 Snapshot del substrato al rilascio v1.29.0
+Vitruvyan **uses** LLMs (via `LLMAgent` core) as tools for delegable linguistic tasks — extraction, classification, summarisation. It does not treat them as cognitive engine. The distinction is equivalent, in biology, to not conflating "the visual cortex" with "the subject's cognitive system": the visual cortex is a specialised component, the cognitive system is the coordinated whole.
 
-| Sorgente | Stato misurato | Implicazione per l'attivazione |
+---
+
+## 9. Activation discipline
+
+The v1.29.0 scaffold contains `AtlasActivationPolicy` as a stub: all sub-gates return `NotImplementedError` until the concrete criteria are implemented. The choice is deliberate and disciplinary: the criteria will be tuned empirically when activation becomes imminent, not from a priori considerations.
+
+What is fixed in the scaffold is the **structure** of the criteria:
+
+| Gate | What it measures | Satisfaction condition |
 |---|---|---|
-| `ontology_observations` | 2430 obs, 386 canonical unici, avg recurrence **1.00** | Sotto qualunque soglia significativa — formazione hebbiana impossibile |
-| `signal_observations` (migrazione 019) | 191 rows, 4 famiglie, avg recurrence 1.63 | Template strutturale che Atlas generalizza |
-| `bus_events` | 22 474 graph events, 1 877 ontology resolutions | Substrato per co-firing detection esistente |
-| `PlasticityManager` | 0 outcomes, 0 adjustments | Dormiente — Atlas G.1 ne diventa primo consumer |
+| **Volume** | co-firing events per day | Ingestion + extraction at productive scale |
+| **Recurrence** | average canonical recurrence | Substrate moves above 1.00 (atomic floor observed in v1.29.0) |
+| **Quality** | gold-standard extraction validated | [aicomsec#32](https://github.com/vitruvyan/aicomsec/issues/32) Phase D closed |
+| **Phase D** | production hardening complete | [aicomsec#32](https://github.com/vitruvyan/aicomsec/issues/32) closed |
 
-Il KPI primario da tracciare quando l'attivazione comincerà è la **edge formation rate**, non la edge quality. La quale ultima è una proprietà che emerge solo se la prima è statisticamente significativa.
+### 9.1 Substrate snapshot at the v1.29.0 release
+
+| Source | Measured state | Implication for activation |
+|---|---|---|
+| `ontology_observations` | 2,430 obs, 386 unique canonicals, avg recurrence **1.00** | Below any meaningful threshold — hebbian formation impossible |
+| `signal_observations` (migration 019) | 191 rows, 4 families, avg recurrence 1.63 | Structural template Atlas generalises |
+| `bus_events` | 22,474 graph events, 1,877 ontology resolutions | Substrate for co-firing detection exists |
+| `PlasticityManager` | 0 outcomes, 0 adjustments | Dormant — Atlas G.1 becomes its first consumer |
+
+The primary KPI to track once activation begins is **edge formation rate**, not edge quality. The latter is a property that emerges only if the former is statistically significant.
 
 ---
 
 ## 10. Roadmap
 
-| Fase | Contenuto | Dipendenze | Stato |
+| Phase | Content | Dependencies | Status |
 |---|---|---|---|
-| **G.0** | Scaffold completo: contratti, consumer dormant, activation gate, integration boundaries | — | **v1.29.0 — completato** |
-| **G.1** | M1 wiring. Edge formation only. Primo consumer reale di `PlasticityManager` | Activation Gate aperto, aicomsec#32 chiuso | Pianificato |
-| **G.2** | M2 + M3. Decay sweep + consolidation con verdict Orthodoxy. `associative_coherence_analyzer` live | G.1 stabile | Pianificato |
-| **G.3** | M4 scalar modulators. Loop di feedback chiuso via `PlasticityManager` | G.2 stabile | Pianificato |
-| **G.4** | Multi-state context modulators. Estensione di `PlasticityObserver` oltre le scalar trajectories | G.3 stabile, estensione observer | Visione |
+| **G.0** | Full scaffold: contracts, dormant consumers, activation gate, integration boundaries | — | **v1.29.0 — completed** |
+| **G.1** | M1 wiring. Edge formation only. First real consumer of `PlasticityManager` | Activation Gate open, aicomsec#32 closed | Planned |
+| **G.2** | M2 + M3. Decay sweep + consolidation with Orthodoxy verdict. `associative_coherence_analyzer` live | G.1 stable | Planned |
+| **G.3** | M4 scalar modulators. Closed feedback loop via `PlasticityManager` | G.2 stable | Planned |
+| **G.4** | Multi-state context modulators. Extension of `PlasticityObserver` beyond scalar trajectories | G.3 stable, observer extension | Vision |
 
-La decisione operativa di topology di deployment (1, 2, o 4 container per-vertical) è parcheggiata su [vitruvyan-core#44](https://github.com/vitruvyan/vitruvyan-core/issues/44) e va risolta prima di G.1.
+The operational decision on deployment topology (1, 2, or 4 containers per-vertical) is parked on [vitruvyan-core#44](https://github.com/vitruvyan/vitruvyan-core/issues/44) and must be resolved before G.1.
 
 ---
 
-## 11. Mapping rispetto al predecessore
+## 11. Mapping against the predecessor
 
-Il documento [Synaptic Conclave](./synaptic-conclave-philosophy) (22 maggio 2026) aveva articolato la tesi del bus come differenziatore architetturale e riconosciuto, al §3.3, l'assenza di un livello di consolidamento mnesico. Questo documento conserva la tesi e fornisce la forma operativa di quel livello.
+The [Synaptic Conclave](./synaptic-conclave-philosophy) document (22 May 2026) articulated the **thesis** of the bus as architectural differentiator and recognised, at §3.3, the absence of a mnemonic consolidation layer. This document preserves the thesis and provides the operational form of that layer.
 
-| Aspetto | Predecessore | Questo documento |
+| Aspect | Predecessor | This document |
 |---|---|---|
-| Bus | Differenziatore architetturale | Strato sinaptico del sistema neurale |
-| Eventi semantici | Aspirazione (§4.1) | Substrato per co-firing detection (M1) |
-| Memoria semantica | "Manca un livello di consolidamento" (§3.3) | Strato corticale — Cortex Atlas (M0-M4) |
-| Propriocezione | Aspirazione (§4.2) | Strato neuro-endocrino futuro (G.4+) |
-| Auditabilità | Proprietà emergente del bus | Resta proprietà del bus, integrata da verdict Orthodoxy per assembly |
-| Rischio "discarica" (§3.1) | Riconosciuto | Affrontato dall'Activation Gate (M0) |
+| Bus | Architectural differentiator | Synaptic layer of the neural system |
+| Semantic events | Aspiration (§4.1) | Substrate for co-firing detection (M1) |
+| Semantic memory | "Missing consolidation layer" (§3.3) | Cortical layer — Cortex Atlas (M0–M4) |
+| Proprioception | Aspiration (§4.2) | Future neuro-endocrine layer (G.4+) |
+| Auditability | Emergent property of the bus | Remains property of the bus, complemented by Orthodoxy verdict for assemblies |
+| "Dump-bus" risk (§3.1) | Acknowledged | Addressed by the Activation Gate (M0) |
 
-Il predecessore resta come documento di visione storica. Questo è il suo seguito operativo.
+The predecessor remains as historical vision document. This is its operational continuation.
 
 ---
 
-## Riferimenti scientifici
+## Scientific references
 
 - Avery, M. C., & Krichmar, J. L. (2017). *Neuromodulatory systems and their interactions: A review of models, theories, and experiments*. Frontiers in Neural Circuits.
 - Bliss, T. V. P., & Lømo, T. (1973). *Long-lasting potentiation of synaptic transmission in the dentate area of the anaesthetized rabbit following stimulation of the perforant path*. Journal of Physiology.
@@ -316,12 +316,12 @@ Il predecessore resta come documento di visione storica. Questo è il suo seguit
 
 ---
 
-## Riferimenti interni
+## Internal references
 
-- [Synaptic Conclave — Visione filosofica e architetturale](./synaptic-conclave-philosophy) — strato sinaptico (predecessore)
-- [Dual Memory Layer](./dual-memory-layer) — memoria di lavoro vs memoria di lungo termine
-- [Sacred Orders Pattern](./sacred-orders-pattern) — pattern architetturale degli ordini
+- [Synaptic Conclave — Visione filosofica e architetturale](./synaptic-conclave-philosophy) — synaptic layer (predecessor)
+- [Dual Memory Layer](./dual-memory-layer) — working memory vs long-term memory
+- [Sacred Orders Pattern](./sacred-orders-pattern) — architectural pattern of the orders
 - Vision RFC: [vitruvyan-core#19](https://github.com/vitruvyan/vitruvyan-core/issues/19) — Cortex Atlas RFC
-- Deployment topology: [vitruvyan-core#44](https://github.com/vitruvyan/vitruvyan-core/issues/44) — decisione G.1
+- Deployment topology: [vitruvyan-core#44](https://github.com/vitruvyan/vitruvyan-core/issues/44) — G.1 decision
 - Activation prerequisite: [aicomsec#32](https://github.com/vitruvyan/aicomsec/issues/32) — Phase D
-- Release: [vitruvyan-core v1.29.0](https://github.com/vitruvyan/vitruvyan-core/releases/tag/v1.29.0) — scaffold Cortex Atlas
+- Release: [vitruvyan-core v1.29.0](https://github.com/vitruvyan/vitruvyan-core/releases/tag/v1.29.0) — Cortex Atlas scaffold
