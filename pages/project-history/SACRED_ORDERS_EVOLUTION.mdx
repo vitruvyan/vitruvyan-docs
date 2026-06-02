@@ -1,0 +1,63 @@
+# Evoluzione dei Sacred Orders
+
+> Come l'architettura cognitiva di Vitruvyan — i **Sacred Orders** — è evoluta dal monolite madre al core agnostico ai verticali. Termini tecnici in inglese, narrazione in italiano.
+
+import { Callout } from 'nextra/components'
+
+## L'idea di fondo
+I **Sacred Orders** modellano la cognizione come **facoltà modulari** con confini netti. Nati come moduli dentro il monolite, sono diventati il contratto architetturale del core agnostico: ogni Order rispetta il **SACRED_ORDER_PATTERN** (struttura a 10 directory) e la separazione a due livelli — **LIVELLO 1** (logica pura, zero I/O) / **LIVELLO 2** (servizio con I/O).
+
+<Callout type="info">
+La gerarchia canonica originale (madre): **Perception · Memory · Reason · Discourse · Truth**. Poi aggiunti **Pattern Weavers (#5)** e, lato finance, **Shadow Trading (#6)**. Nel core V1.0 gli Order canonici diventano 6 (Codex Hunters, Memory Orders, Vault Keepers, Babel Gardens, Orthodoxy Wardens, Pattern Weavers); Shadow Trading resta *finance-vertical only*.
+</Callout>
+
+---
+
+## #1 Perception — Codex Hunters
+- **v1 (madre, 2025):** acquisizione dati multi-sorgente, inizialmente con **CrewAI** (EventHunter/Leonardo Orchestrator) + scraping Reddit/news.
+- **v2 (madre, ott 2025):** *Codex Hunters Medieval Data Intelligence Layer* — pipeline async, Vault Keepers in Docker.
+- **v3 (refactor, feb 2026):** **CrewAI deprecato** e rimosso; Codex Hunters ristrutturato in `consumers/domain/orchestration/adapters/` allineato ai contratti del core.
+- **v4 (verticali, 2026):** nel core come `governance/codex_hunters/` con pipeline RAG atomica `/ingest_evidence`; nei verticali affiancato da `api_edge_oculus_prime` (intake documenti/GDrive/Reddit). In aicomsec si aggiunge **MISP/CSIRT Italia** (threat-intel).
+
+## #2 Memory — Memory Orders + Vault Keepers + Qdrant
+- **v1:** snippet di conversazione hard-coded.
+- **v2 (ott 2025):** **dual memory** — Archivarium (PostgreSQL, strutturato) + Mnemosyne (Qdrant, semantico), coerenza monitorata (<5% drift) dai **Memory Orders**.
+- **v3 (nov 2025):** **VSGS** sostituisce `conversation_persistence.py`; `state['semantic_matches']` diventa la chiave canonica.
+- **v4 (verticali, 2026):** Memory Orders e Vault Keepers come Sacred Orders a due livelli; **embedding 384→768 (nomic)**; mercator passa a **bge-m3 (1024)**. La memoria semantica viene dichiarata "la frontiera cognitiva più importante".
+
+## #3 Reason — Neural Engine + VPAR + Horizon
+- **v1 (madre):** **Neural Engine** con 14 funzioni z-score (A–L + P + Earnings), 5 profili di screening. Insidia nota: z-score non stratificati su 2.629 ticker (contaminazione cross-settore).
+- **v2 (madre, dic 2025):** nascono i motori proprietari **VPAR** — **VEE** (explainability), **VARE** (rischio adattivo), **VWRE** (attribuzione), **VGOP** (ottimizzazione, solo design).
+- **v3 (refactor, feb 2026):** VPAR migrato nel core (`core/vpar/`), reso domain-agnostic; **VMFL e VHSW deprecati** (assorbiti in VWRE).
+- **v4 (verticali, 2026):** Neural Engine spostato sotto `governance/`; aggiunti **Horizon Engine** (forecasting/Pareto) e **Veritas Engine**; in aicomsec nasce **PORTITOR** (risk engine 7-step, *vertical-only* per decisione esplicita).
+
+## #4 Discourse — Babel Gardens + LangGraph + VEE
+- **v1 (madre):** sentiment FinBERT + intent via regex.
+- **v2 (ago–nov 2025):** **Babel Gardens** unifica linguistica e sentiment (84 lingue, FinBERT, embedding MiniLM); arriva la **Nuclear Option** (LLM-first per intent/entity).
+- **v3 (refactor, 2026):** Babel come Sacred Order della Discourse nel core; **emotion-detection retired** (Babel v3.0→v3.2, sistema a segnali enum); **PatternClassifier deprecato**.
+- **v4 (verticali, 2026):** LangGraph come unico orchestratore con `BaseGraphState` agnostico + **Sacred Flow** obbligatorio; mercator ridisegna il sentiment finance (v3.0, `signal_observations`); aicomsec usa un plugin SecBERT.
+
+## #5 Truth — Orthodoxy Wardens + Vault Keepers + Blockchain
+- **v1 (madre, nov 2025):** **Orthodoxy Wardens** (validazione: output *blessed/purified/heretical*) + **Blockchain Ledger** su Tron (anchoring immutabile degli audit).
+- **v2 (refactor, feb 2026):** gli Orthodoxy Wardens sono il **primo Order** a ricevere il SACRED_ORDER_PATTERN (template per gli altri); arriva la **V1 Final Closure Certification**.
+- **v3 (verticali, 2026):** governance via *visibilità prima, enforcement poi* (Semantic Warden V1 in sola osservazione sulla RAG); in aicomsec **TLP** (Traffic Light Protocol) e **Meridian** causal-replay. *Nota:* in produzione aicomsec questo layer è parzialmente degradato (audit_events vuoto, `/conclave/status` 500) — vedi `RISKY_PATTERNS`.
+
+## #5-bis Pattern Weavers (Sacred Order #5)
+- **v1 (madre, nov 2025):** contestualizzazione semantica (concetti/regioni/settori/risk profile da query).
+- **v2 (core, mag 2026):** l'**ontologia** passa sotto Pattern Weavers (`cognitive/pattern_weavers/ontology/`), con estrazione **Phase D** al momento dell'ingestion.
+
+## #6 Shadow Trading (finance-vertical only)
+- **v1 (madre, gen 2026):** Sacred Order #6 — paper trading, conti cash auto-init.
+- **v2 (verticali):** **rimosso dal core V1.0** (non agnostico) e mantenuto come servizio del solo vertical finance (`api_shadow_traders` in mercator), affiancato da **Portfolio Architects**.
+
+---
+
+## Il bus che li tiene insieme — Synaptic Conclave
+Gli Order non si importano a vicenda: comunicano via **eventi sul bus**. Evoluzione del trasporto: **Redis Pub/Sub → Redis Streams** (24 gen 2026) con consumer group, ACK e **DLQ**. Invariante permanente: il bus è **payload-blind** (non ispeziona, non correla, non instrada semanticamente, non sintetizza). L'intelligenza vive nei consumer, non nel trasporto.
+
+## Lo scaffold del futuro — Cortex Atlas (dormiente)
+v1.29.0 introduce **Cortex Atlas**: un layer corticale Hebbian (co-firing/edge-detection) **dormiente**, doppio-gated (`CORTEX_ATLAS_ENABLED` + `AtlasActivationPolicy` con 4 gate non ancora soddisfatti). Filosofia: *"Cortex Atlas non modella il mondo, modella l'esperienza del sistema del mondo"*. È il prototipo di una memoria che trasforma l'esperienza ripetuta in struttura permanente.
+
+<Callout type="info">
+Dettaglio modulo-per-modulo e stato corrente: `project-memory/current/MODULE_MAP.md`. Le decisioni che hanno guidato ogni passaggio: `project-memory/history/ARCHITECTURE_DECISIONS.md`.
+</Callout>

@@ -15,5 +15,6 @@
   "architecture": "Architecture",
   "services": "Services",
   "web-ui": "Web UI",
-  "infrastructure": "Infrastructure"
+  "infrastructure": "Infrastructure",
+  "project-history": "Project History"
 }

@@ -1,0 +1,25 @@
+# Project History — La memoria storica di Vitruvyan
+
+> *Tracciare lo sviluppo del progetto attraverso i commit e le decisioni — perché capire **come** e **perché** siamo arrivati qui è contesto prezioso quanto il codice.*
+
+Questa sezione ricostruisce l'evoluzione e la filosofia della **famiglia Vitruvyan** a partire da **3.162 commit** su 5 repository (giu 2025 → giu 2026):
+
+- **[Narrativa storica](./PROJECT_HISTORY_NARRATIVE)** — la storia per epoche: dalla nascita del monolite madre alla famiglia di verticali su un core agnostico.
+- **[Evoluzione dei Sacred Orders](./SACRED_ORDERS_EVOLUTION)** — come ogni facoltà cognitiva è cambiata dal monolite → core → verticali.
+- **[Filosofia](./PROJECT_PHILOSOPHY)** — il *perché*: OS epistemico, Sacred Orders, due livelli, bus payload-blind, LLM-first, umiltà epistemica, spiegabilità.
+
+## La famiglia in una mappa
+
+| Repo | Ruolo | Stato | Commit |
+|------|-------|-------|--------|
+| `vitruvyan` (dbaldoni) | **Madre** — origine, doc, filosofia | ❄️ congelato (21 feb 2026) | ~1015 |
+| `vitruvyan-core` (org) | Core agnostico (kernel epistemico) | ✅ attivo (v1.29.0) | 590 |
+| `mercator` (org) | Verticale finance | ✅ attivo | 554 |
+| `aicomsec` (org) | Verticale security | ✅ attivo | 707 |
+| `vitruvyan-ui` (dbaldoni) | UI (Mercator) | ❄️ congelato (14 feb 2026) | 296 |
+
+import { Callout } from 'nextra/components'
+
+<Callout type="info">
+Questa sezione è la **narrativa** (il *perché*/*come*). La **memoria tecnica** per i coding agent — ciò che vale **oggi**, le regole, le decisioni, gli anti-pattern e il corpus per la RAG — vive in `project-memory/` (fuori dal sito pubblico): `CURRENT_TRUTH.md`, `CURRENT_BOUNDARIES.md`, `MODULE_MAP.md`, `ARCHITECTURE_DECISIONS.md`, `DEPRECATED_COMPONENTS.md`, `RISKY_PATTERNS.md`.
+</Callout>

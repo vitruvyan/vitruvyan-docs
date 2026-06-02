@@ -1,0 +1,60 @@
+# La filosofia di Vitruvyan
+
+> Il *perché* dietro l'architettura. Sintesi delle "philosophy notes" estratte dai cinque repository (copilot-instructions, CLAUDE.md, README, Costituzione UI, decision register). Narrazione in italiano, termini tecnici in inglese.
+
+import { Callout } from 'nextra/components'
+
+## 1. Un sistema operativo della conoscenza
+Vitruvyan non è "un'AI che fa trading". È un **Epistemic Operating System**: un livello che governa *come* la conoscenza viene acquisita, validata, conservata e ragionata — e, soprattutto, reso **spiegabile**. La metafora "OS" è letterale: `vit` è il *package manager*, i Sacred Orders sono i *moduli del kernel*, il bus è il *sistema nervoso*. Il nome stesso — Vitruvyan, dall'**Uomo Vitruviano** — evoca *proporzione e architettura*: qui applicate all'architettura della cognizione.
+
+> *"Structure, not solution. Ontological neutrality."* — il core fornisce l'infrastruttura epistemologica; i domini iniettano la semantica.
+
+## 2. I Sacred Orders: la cognizione come facoltà
+Modellare la mente come **facoltà modulari** (Perception, Memory, Reason, Discourse, Truth, Patterns) non è estetica: dà **confini epistemici** verificabili. Ogni file dichiara a quale Order appartiene; ogni Order ha responsabilità che non può oltrepassare. È ciò che ha reso il sistema *estraibile* e *riusabile* — la prova è `aicomsec`, che applica lo stesso cervello alla sicurezza con il solo swap del domain plugin.
+
+## 3. L'architettura a due livelli come "religione"
+> *"Il giudice (core) non tocca mai il database. Il cancelliere (service) lo fa per lui."*
+
+- **LIVELLO 1** = pensiero puro: logica di dominio, **zero I/O**, importabile, testabile in isolamento.
+- **LIVELLO 2** = azione: i servizi con I/O, infrastruttura, FastAPI.
+
+La direzione delle dipendenze è a senso unico (servizi → core, mai il contrario). Questa disciplina è il motivo per cui il core ha potuto diventare *domain-agnostic* e ospitare verticali diversi.
+
+## 4. Il bus ignorante per scelta
+Il **Synaptic Conclave** (Redis Streams) è **payload-blind**: non ispeziona, non correla, non instrada semanticamente, non sintetizza. *"Non so cosa significhi"* è il suo stato permanente. L'intelligenza appartiene ai consumer. È una scelta di **robustezza**: un trasporto che non capisce non può corrompere il significato. Ispirazione **bio**: il **polpo** (2/3 dei neuroni nelle braccia → autonomia locale dei consumer; 1/3 nel cervello → governance minimale degli Orthodoxy Wardens) e le **reti miceliali** dei funghi (routing emergente, nessun processore centrale, resilienza topologica).
+
+## 5. LLM-first ("Nuclear Option")
+> *"I regex limitano la capacità conversazionale perché sono criteri rigidi."*
+
+Per ogni compito di comprensione del linguaggio (intent, emotion, entity, lingua, ontologia) **l'LLM è il motore primario** (~95%); regex ed euristiche sono solo *graceful degradation* (~60–70%). Pattern: **LLM = primario, validazione = obbligatoria, cache = ottimizzazione**. Non è "AI dappertutto": è rifiuto della fragilità dei criteri rigidi.
+
+## 6. L'umiltà epistemica: l'utente è l'unica autorità
+Il backend **non inferisce mai** le entità (i ticker) dal testo libero dell'utente. Le liste `validated_*` sono legge — incluso il `[]` esplicito ("nessuna entità"). È **agency dell'utente** e insieme **umiltà del sistema**: non si simula certezza dove non c'è. È anche la lezione più costosa del progetto: ogni tentativo di estrarre entità dal testo ha rotto la produzione (CASE D2, poi revertito).
+
+<Callout type="warning">
+Corollario, dalla Charter epistemica: **"Non so" è una risposta valida e completa.** Il sistema preferisce il silenzio all'ambiguità — meglio non dire nulla che dire qualcosa di fuorviante.
+</Callout>
+
+## 7. La spiegabilità come valore fondante
+**VEE (Vitruvyan Explainability Engine)** trasforma gli z-score in narrative su 3 livelli (summary/detailed/technical); **VWRE** ricostruisce a ritroso i punteggi compositi in contributi pesati. La domanda *"perché AAPL è primo e TSLA quinto?"* deve sempre avere risposta. Nella UI questo diventa legge costituzionale: *"La spiegazione è un layer cognitivo, non una nota a piè di pagina."*
+
+## 8. Retrieval semantico, non deterministico
+Ranking, espansione query e valutazione **preferiscono la comprensione semantica** alle formule fisse: `CrossEncoderReranker` > soglie, `HyDE` > keyword, `LLMRAGEvaluator` > token-overlap. I componenti deterministici sono fallback, non protagonisti.
+
+## 9. La memoria duale e la coerenza come governance
+**Archivarium** (PostgreSQL, verità strutturata) + **Mnemosyne** (Qdrant, associazioni semantiche). La **coerenza** tra i due (<5% drift) è un invariante di governance, non un dettaglio operativo. La frontiera dichiarata: trasformare l'esperienza ripetuta in **struttura permanente** (ontologia, e in prospettiva Cortex Atlas).
+
+## 10. Il vocabolario liturgico
+Gli output sono *blessed* (puliti), *purified* (con warning), *heretical* (allucinazioni rigettate). Gli Orthodoxy Wardens "benedicono" o "purificano". Non è folklore: riflette l'idea di **OS epistemico** dove la validazione della verità è un *rito* con regole esplicite.
+
+## 11. La Costituzione UI (l'interfaccia come filosofia resa visibile)
+17 articoli immutabili governano la UI: l'utente è *cognitive-first* (Art. I), l'**adapter è l'unità di UX** e il renderer è infrastruttura stabile (Art. II/III), la spiegabilità è un dominio (Art. VI), l'**ordinamento epistemico delle evidenze** (Solidità → Redditività → Crescita → Risk → Momentum → Sentiment) è *blindato* (Art. XII), il silenzio batte l'ambiguità (Art. XI). *"L'UI è un framework, gli adapter sono le applicazioni"* — la stessa architettura a due livelli, resa visibile. E il principio che riassume tutto: **"Vitruvyan spiega, non convince."**
+
+---
+
+## In una frase
+> Vitruvyan è un **sistema operativo epistemico** che modella la cognizione come facoltà modulari (Sacred Orders), separa nettamente il pensiero puro dall'azione (due livelli), tratta il trasporto come ignorante per robustezza (bus payload-blind), mette l'LLM al centro ma con validazione obbligatoria, riconosce all'utente l'autorità sulle entità, e considera la **spiegabilità** e l'**umiltà epistemica** ("non so" è una risposta) come valori non negoziabili.
+
+<Callout type="info">
+Per come questi principi si traducono in **regole operative** per chi scrive codice: `project-memory/memory-pack/CODING_AGENT_RULES.md` e `project-memory/current/CURRENT_BOUNDARIES.md`.
+</Callout>

@@ -1,0 +1,66 @@
+# La storia di Vitruvyan — Narrativa per epoche
+
+> *Dalla nascita del monolite madre alla famiglia di verticali su un core agnostico.*
+> Ricostruita da **3.162 commit** su 5 repository (giu 2025 → giu 2026). Termini tecnici in inglese, narrazione in italiano. Ogni affermazione è tracciabile a un commit o a un file (vedi `project-memory/corpus/`).
+
+import { Callout } from 'nextra/components'
+
+<Callout type="info">
+Questa è la **narrativa storica** (il *perché* e il *come*). Per ciò che vale **oggi**, la fonte di verità è `project-memory/current/CURRENT_TRUTH.md`. Quando storia e presente divergono, vince il presente.
+</Callout>
+
+## Il colpo d'occhio
+
+```
+        vitruvyan  ui    core  mercator aicomsec
+2025-06    21       —      —availa     —        —      ← nasce la MADRE
+2025-07    12      43      —        —        —      ← nasce la UI
+2025-10   569       8      —        —        —      ← LA GRANDE ESPANSIONE
+2025-11   138      50      —        —        —      ← Truth layer
+2025-12   130     106     10       10       10     ← IL GRANDE REFACTOR (split del core, 29 dic)
+2026-02    13      16    303      303      308     ← VERTICALIZZAZIONE (la madre si spegne)
+2026-05     0       0     68       20      192     ← i verticali divergono
+```
+
+I conteggi identici di core/mercator/aicomsec (10/10/10 a dicembre, ~303 a febbraio) non sono un caso: **i tre repository hanno condiviso una stessa storia git** (root comune `96d3c888`) — erano un monorepo, poi forkato. È la prova materiale della genealogia del progetto.
+
+---
+
+## EPOCH 1 — Genesis (giu–set 2025)
+**La madre prende forma.** Il 25 giugno 2025 nasce `vitruvyan`: un sistema multi-agente costruito su CrewAI, PostgreSQL e sentiment FinBERT, con un "Leonardo Orchestrator". A luglio nasce in parallelo la **UI** (scaffold da v0.dev su Vercel) e si integra subito Keycloak. Agosto–settembre vedono il **Semantic Engine**, il primo refactor verso **LangGraph**, lo slot-filling multilingua e il setup di Redis Sentinel. È l'epoca delle fondamenta: ancora nessun VEE, nessuna validazione dei ticker.
+*Tag dell'epoca: `backtest-risk-v1`, `semantic-engine-multilingua-v1`, `graph-memory-v1`.*
+
+## EPOCH 2 — The Great Expansion (ott 2025)
+**Il mese più intenso di tutta la storia: 569 commit.** Esplode il *Codex Hunters Medieval Data Intelligence Layer*, i Vault Keepers entrano in Docker, Babel Gardens raggiunge la conversational intelligence, il sistema RAG diventa operativo al 100%, arriva il testing E2E (366 test), il semantic clustering (UMAP+HDBSCAN), l'emotional intelligence e i suggerimenti proattivi. È il momento in cui Vitruvyan passa da prototipo a piattaforma.
+
+## EPOCH 3 — Truth Layer (nov–dic 2025)
+**Maturazione e governance.** Novembre porta la svolta della qualità: la **Language-First Architecture** (`69c42067`) rende la lingua immutabile dopo la detection, chiudendo un bug che per due mesi rispondeva in inglese a domande italiane. Nasce **VSGS** (e si deprezza `conversation_persistence.py`), arriva **Pattern Weavers** (Sacred Order #5), il **Blockchain Ledger** su Tron (anchoring degli audit), e la **Nuclear Option** per l'estrazione LLM dei ticker. Dicembre consolida: fundamentals nel Neural Engine, **VARE** e **VWRE**, **VEE English-only**, l'integrazione **MCP**, e — decisione cardine — il **contratto di validazione dei ticker lato frontend** (29 dic): l'utente è l'unica autorità sulle entità.
+
+<Callout type="warning">
+La UI accelera fortissimo in questa fase (106 commit a dicembre): è qui che nascono l'**Unified Response System** (un solo renderer + adapter, –85% di codice) e la **Costituzione UI** (17 articoli). Vedi `SACRED_ORDERS_EVOLUTION` e `PROJECT_PHILOSOPHY`.
+</Callout>
+
+## EPOCH 4 — The Great Refactor / Core Extraction (29 dic 2025 → gen 2026)
+**Il momento che cambia tutto.** Dal monolite si estrae un **core agnostico**: il 29 dicembre nasce `vitruvyan-core` (root `96d3c888`). La scelta architetturale è radicale e duratura: **due livelli** — LIVELLO 1 (core, pura logica, *zero I/O*) e LIVELLO 2 (servizi, con I/O). Da quello stesso root vengono inizializzati anche `mercator` e `aicomsec`: per mesi i tre repo condividono la storia (monorepo di fatto). Gennaio porta la migrazione del bus a **Redis Streams** (Synaptic Conclave), abbandonando Pub/Sub.
+
+## EPOCH 5 — Cognitive Bus / Synaptic Conclave (gen 2026)
+**Il sistema nervoso diventa durevole.** Pub/Sub era fire-and-forget: niente persistenza, niente replay, eventi persi ai restart. La migrazione a **Redis Streams** (consumer group + ACK, poi DLQ) rende il bus *durable* e *payload-blind*: il trasporto non interpreta mai i messaggi ("non so cosa significhi" è il suo stato permanente). È uno dei due grandi spartiacque tecnici, insieme alla deprecazione di CrewAI.
+
+## EPOCH 6 — Verticalization Explosion (feb 2026)
+**~303 commit ciascuno su core, mercator, aicomsec — e la madre si spegne.** Si impone il **SACRED_ORDER_PATTERN** (struttura a 10 directory, due livelli) su tutti e 6 i Sacred Orders, culminando nella **V1 Final Closure Certification** del 15 febbraio (256 file scansionati, 0 violazioni, 653 test, 0 segreti). **CrewAI viene rimosso del tutto.** Il 26 febbraio nasce `aicomsec` come stack di sicurezza basato su core v1.5.0. Il 21 febbraio l'ultimo commit del monolite madre (`37b93dd4`) lo **congela**: lo sviluppo si è trasferito interamente su core + verticali.
+
+## EPOCH 7 — Independent Verticals (mar–giu 2026)
+**I figli camminano da soli.** Marzo: enforcement della genericità del core, `TenancyContract` V1, fix di prompt injection, Jenkins CI, e la **migrazione dell'org da `dbaldoni` a `vitruvyan`**. Aprile: supporto **multi-provider LLM**, MCP V2, la **CLI `vit`** per distribuire il core ai verticali, e la migrazione embedding 384→768 (nomic). Maggio: il core diventa **strettamente agnostico** (rimozione di finance/enterprise, `496eac5`), arriva l'ontologia sotto Pattern Weavers e lo scaffold dormiente **Cortex Atlas** (v1.29.0); `aicomsec` ha un'impennata (192 commit: MISP threat-intel, Meridian causal-replay, TLP, PORTITOR) mentre `mercator` si stabilizza e, a giugno, ridisegna il sentiment (v3.0), aggiunge l'MCP finance pack e passa a **bge-m3** per la RAG ibrida. `mercator` viene infine trasferito all'org `vitruvyan`.
+
+---
+
+## Le due cesure che spiegano tutto
+1. **L'estrazione del core (dic 2025)** — da prodotto a *piattaforma*: la disciplina dei due livelli ha reso possibile riusare lo stesso cervello epistemico per domini diversi (finance → security).
+2. **Il Cognitive Bus a Streams + la deprecazione di CrewAI (gen–feb 2026)** — da orchestrazione fragile a *sistema nervoso* durevole e payload-blind.
+
+## Cosa è morto lungo la strada
+CrewAI, Redis Pub/Sub, `PatternClassifier`, `conversation_persistence.py`, VMFL/VHSW, il backtest subsystem, i 14+ NodeUI della prima UI, l'emotion-detection di Babel, gli embedding a 384-dim. Il catalogo completo (con i sostituti) è in `project-memory/history/DEPRECATED_COMPONENTS.md` — perché *sapere cosa non rianimare* è memoria preziosa quanto sapere cosa usare.
+
+<Callout type="info">
+**Nota di metodo.** Questa narrativa è una sintesi per epoche, non un log commit-per-commit. I commit completi restano in `project-memory/corpus/commits.jsonl` per il retrieval semantico. Le date e i volumi sono fatti; i nomi delle epoche sono interpretazione.
+</Callout>
