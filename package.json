@@ -11,6 +11,7 @@
     "lucide-react": "^0.441.0",
     "mermaid": "^11.4.1",
     "next": "14.2.29",
+    "next-auth": "^4.24.14",
     "nextra": "2.13.4",
     "nextra-theme-docs": "2.13.4",
     "react": "18.3.1",
