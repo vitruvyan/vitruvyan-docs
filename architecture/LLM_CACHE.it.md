@@ -61,10 +61,11 @@ binding identico**.
   (Nomic 768-dim via `api_embedding`) e si cerca in Qdrant la risposta passata
   più simile **sopra soglia** (cosine).
 - **Hard-filter di binding (sicurezza)**: la ricerca semantica è vincolata da un
-  filtro Qdrant *esatto* su `tenant`, `language`, `intent`, **insieme di entità**
-  e `prompt_type`. Il match semantico varia **solo la formulazione**: una
-  parafrasi su un'**entità diversa** (o altro tenant/lingua) **non potrà mai**
-  restituire la risposta di un'altra entità.
+  filtro Qdrant *esatto* su `tenant`, `language`, `intent`, **insieme di entità**,
+  `prompt_type` e — sul path RAG — **set di evidenze** (vedi sotto). Il match
+  semantico varia **solo la formulazione**: una parafrasi su un'**entità diversa**
+  (o altro tenant/lingua/evidenza) **non potrà mai** restituire la risposta di un
+  altro contesto.
 - **Allow-list dei prompt type**: attiva solo per tipi **non vincolanti /
   esplicativi** (es. `general`, `explanation`, `detailed_analysis`); mai per
   risposte che dipendono da output deterministici puntuali.
@@ -73,13 +74,39 @@ binding identico**.
   (con il binding context come payload) per i prossimi near-paraphrase.
 - **Degradazione**: embedding o Qdrant non disponibili → miss → LLM fresco.
 
+### L2 sul path RAG — **evidence-binding** (sicurezza)
+
+Le risposte RAG dipendono dalle **evidenze recuperate**, non solo dal testo della
+domanda. Cachare per sola similarità del testo rischierebbe di servire una
+risposta **stantia** rispetto al corpus attuale — inaccettabile in sicurezza.
+
+`security_rag_synthesis` avvolge la **sola sintesi LLM** (la chiamata costosa
+large-context) con lookup/store L2, aggiungendo al binding un **`evidence_key`** =
+hash dei `chunk_id` recuperati. Una risposta RAG cachata viene riusata **solo
+quando una domanda simile recupera la stessa evidenza**: se il corpus cambia
+(chunk diversi) l'`evidence_key` cambia → **miss → sintesi fresca**. Non si serve
+**mai** una risposta fondata su evidenza superata. Il post-processing
+deterministico (igiene citazioni, blocco IoC, TLP, chip spaziali) resta sempre
+ricalcolato. Il path soft/conversazionale è invariato (`evidence_key='none'`).
+
+A protezione ulteriore: **invalidate-on-ingest** (`invalidate_tenant`) — quando il
+corpus di un tenant cambia, l'`evidence_indexer` purga le voci L2 di quel tenant
+(le voci a evidenza ormai irraggiungibile spariscono subito, senza attendere il
+TTL).
+
+### Eviction / TTL (crescita limitata)
+
+Qdrant non ha un TTL nativo. Ogni punto porta `created_at_epoch`; lo sweep
+`prune_expired()` (range-delete oltre `LLM_SEMANTIC_CACHE_TTL_DAYS`) viene eseguito
+opportunisticamente sullo store. **Default off** per non cambiare il comportamento.
+
 ### Postura di sicurezza
 
 - **OFF di default** (`LLM_SEMANTIC_CACHE_ENABLED=false`): si abilita
   esplicitamente per-deploy.
 - **Soglia alta** (cosine `0.95`): solo parafrasi davvero vicine.
-- Il binding context come **hard-filter** garantisce isolamento tenant/entità:
-  la similarità non attraversa mai i confini di contesto.
+- Il binding context come **hard-filter** garantisce isolamento tenant/entità/
+  evidenza: la similarità non attraversa mai i confini di contesto.
 
 ### Configurazione L2
 
@@ -88,7 +115,10 @@ binding identico**.
 | `LLM_SEMANTIC_CACHE_ENABLED` | `false` | abilita la cache semantica |
 | `LLM_SEMANTIC_CACHE_THRESHOLD` | `0.95` | soglia cosine minima per un hit |
 | `LLM_SEMANTIC_CACHE_PROMPT_TYPES` | `general,explanation,detailed_analysis` | prompt type ammessi |
+| `LLM_SEMANTIC_CACHE_TTL_DAYS` | `0` (off) | orizzonte di eviction (giorni) per lo sweep |
+| `LLM_SEMANTIC_CACHE_INVALIDATE_ENABLED` | `false` | purga la cache del tenant all'ingest del corpus |
 
+- `evidence_key` (RAG) è **automatico** (dai chunk recuperati): nessuna config.
 - **Collezione Qdrant**: `llm_semantic_cache`, **768-dim**, distanza **Cosine**.
   Dichiarata in `contracts.rag` come collezione CORE; **auto-creata** al primo
   utilizzo (`ensure_collection`), nessuna migrazione manuale.
@@ -96,31 +126,40 @@ binding identico**.
 
 ---
 
-## Orchestrazione (`cached_llm_node`)
+## Orchestrazione (due path)
 
-1. Calcola la chiave e tenta **L1** (lookup esatto).
-2. Su miss L1, se la L2 è attiva *e* il `prompt_type` è in allow-list → tenta **L2**.
-3. Su miss totale → chiama l'**LLM**; poi **store** in L1 (sempre) e in L2 (se attiva).
-4. Un hit L2 viene **promosso** in L1.
+La L2 vive in **due punti** del grafo:
 
-Ogni fallimento infrastrutturale lungo questa catena → **miss** + chiamata LLM
+- **Path soft/conversazionale** — `cached_llm_node` (route `llm_soft`, intent
+  conversazionali): L1 esatto → su miss L2 (se attiva + allow-list) → su miss LLM
+  → store L1 (sempre) + L2 (se attiva); un hit L2 è **promosso** in L1.
+- **Path RAG** — `security_rag_synthesis`: dopo il retrieval, calcola
+  l'`evidence_key` dai chunk recuperati, fa lookup L2 **evidence-bound** attorno
+  alla sintesi; su miss esegue la sintesi e la memorizza. È qui che vivono i
+  risparmi di token (chiamate large-context).
+
+Ogni fallimento infrastrutturale lungo la catena → **miss** + chiamata LLM
 fresca: la chat non si blocca mai per colpa della cache.
 
 ---
 
 ## Operatività
 
-- **Abilitare la L2**: impostare `LLM_SEMANTIC_CACHE_ENABLED=true` sul servizio
-  che esegue il grafo (`cached_llm_node`) e ricreare il container. La collezione
-  Qdrant si crea da sola al primo uso.
-- **Invalidare per entità**: alla modifica dei dati di un'entità, invalidare le
-  voci L1 collegate via reverse index (le risposte stantie spariscono subito).
-- **Svuotare la cache**: rimuovere le chiavi Redis con il prefisso della cache
+- **Abilitare la L2**: `LLM_SEMANTIC_CACHE_ENABLED=true` sul servizio che esegue
+  il grafo e ricreare il container. La collezione Qdrant si crea da sola al primo uso.
+- **Limitare la crescita L2 (TTL)**: `LLM_SEMANTIC_CACHE_TTL_DAYS=<giorni>` →
+  sweep automatico sullo store.
+- **Invalidate-on-ingest L2**: `LLM_SEMANTIC_CACHE_INVALIDATE_ENABLED=true`
+  sull'`evidence_indexer` → al cambio corpus di un tenant ne purga la cache L2.
+- **Invalidare per entità (L1)**: alla modifica dei dati di un'entità, le voci L1
+  collegate spariscono via reverse index.
+- **Svuotare la cache L1**: rimuovere le chiavi Redis col prefisso della cache
   (cold start innocuo: si ripopola alla prima richiesta).
 - **Modifiche al modulo cache (core)**: i servizi **non montano** `core/` → una
   modifica a `cache_manager.py`/`semantic_cache.py` richiede **rebuild** del
   servizio (non un semplice restart).
 
-> Cronologia: la riscrittura della L1 (statistiche/invalidation corrette,
-> degradazione Redis) e l'introduzione della L2 semantica sono arrivate nelle
-> release Core **1.31.2** (L1) e **1.32.0** (L2).
+> Cronologia (release Core): **1.31.2** riscrittura L1 (statistiche/invalidation
+> corrette, degradazione Redis) · **1.32.0** L2 semantica · **1.32.1** fix lettura
+> cross-schema (`from_dict`) · **1.33.0** L2 sul path RAG **evidence-bound** + TTL
+> prune · **1.34.0** invalidate-on-ingest.
