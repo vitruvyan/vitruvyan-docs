@@ -1,5 +1,6 @@
 {
   "orchestration": "Orchestration",
+  "motus": "Motus (Trace-First Runtime)",
   "cognitive-bus": "Cognitive Bus (Synaptic Conclave)",
   "core-agents": "Core Agents",
   "sacred-orders": "Sacred Orders",
