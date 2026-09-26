@@ -1,22 +1,28 @@
 import React from 'react'
-import { useTheme } from 'nextra-theme-docs'
 import { DocsThemeConfig } from 'nextra-theme-docs'
 
 function Logo() {
-  const { resolvedTheme } = useTheme()
+  // The same lockup as the Orbis UI (components/brand/BrandLogo.jsx): the two SVGs are
+  // masks, so the colour follows the theme through currentColor.
+  const mask = (url: string): React.CSSProperties => ({
+    display: 'block',
+    height: 26,
+    backgroundColor: 'currentColor',
+    WebkitMaskImage: `url(${url})`,
+    maskImage: `url(${url})`,
+    WebkitMaskRepeat: 'no-repeat',
+    maskRepeat: 'no-repeat',
+    WebkitMaskPosition: 'center',
+    maskPosition: 'center',
+    WebkitMaskSize: 'contain',
+    maskSize: 'contain',
+  })
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-      <img
-        src="/vit_logo_header.svg"
-        alt="Vitruvyan"
-        height={28}
-        style={{
-          height: 28,
-          width: 'auto',
-          filter: resolvedTheme === 'dark' ? 'invert(1) brightness(1.1)' : 'none',
-          transition: 'filter 0.2s',
-        }}
-      />
+      <span role="img" aria-label="Vitruvyan" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+        <span aria-hidden="true" style={{ ...mask('/brand/symbol_vit.svg'), width: 25 }} />
+        <span aria-hidden="true" style={{ ...mask('/brand/wordmark.svg'), width: 115 }} />
+      </span>
       <span style={{
         fontSize: '0.72rem',
         fontWeight: 500,

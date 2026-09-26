@@ -13,9 +13,15 @@
   "installation": "Installation",
   "system-core": "System Core",
   "limen": "Limen",
+  "multi-agent": "Multi-Agent",
   "architecture": "Architecture",
   "services": "Services",
   "web-ui": "Web UI",
   "infrastructure": "Infrastructure",
-  "project-history": "Project History"
+  "project-history": "Project History",
+  "multi-agent-nav": {
+    "title": "Multi-Agent",
+    "type": "page",
+    "href": "/multi-agent"
+  }
 }
