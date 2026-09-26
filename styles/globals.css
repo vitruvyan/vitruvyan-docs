@@ -84,3 +84,10 @@ article.nextra-content {
   position: relative;
   z-index: 10;
 }
+
+/* Header mobile: etichette corte, così logo, KB e Ask Vit stanno su una riga. */
+.kb-label-short { display: none; }
+@media (max-width: 640px) {
+  .kb-label-long { display: none; }
+  .kb-label-short { display: inline; }
+}

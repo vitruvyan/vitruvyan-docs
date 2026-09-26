@@ -31,7 +31,8 @@ function Logo() {
         opacity: 0.45,
         fontFamily: 'var(--font-inter, sans-serif)',
       }}>
-        Knowledge Base
+        <span className="kb-label-long">Knowledge Base</span>
+        <span className="kb-label-short">KB</span>
       </span>
     </div>
   )
@@ -60,7 +61,8 @@ const config: DocsThemeConfig = {
         }}
       >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7c3aed', display: 'inline-block' }} />
-        Ask Vitruvyan
+        <span className="kb-label-long">Ask Vitruvyan</span>
+        <span className="kb-label-short">Ask Vit</span>
       </a>
     ),
   },
