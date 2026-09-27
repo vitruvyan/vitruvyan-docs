@@ -9,9 +9,16 @@ the audit evidence. A run does not produce a log alongside its result: it
 produces a causal account of itself, in a published format, that a third party
 can check without trusting the process that wrote it or the people who run it.
 
-> **Repository:** `vitruvyan/motus` (private) · **Version:** 0.8.1 ·
-> **Trace schema:** 2.0.0 · **Import:** `vitruvyan_motus` ·
+> **Repository:** [`vitruvyan/motus`](https://github.com/vitruvyan/motus) ·
+> **Source release:** `v0.23.0` · **Trace schema:** 3.2.0 ·
+> **Import:** `vitruvyan_motus` ·
 > **Dependencies:** the kernel imports nothing outside the standard library
+
+`v0.23.0` is tagged on the Jenkins-verified merge. Its wheel and sdist are
+preserved in an authenticated workflow artifact and a founder-reviewable draft
+GitHub Release. The draft and PyPI package are not published, so install this
+exact source release from the tag rather than assuming the package index serves
+0.23.0.
 
 ---
 
@@ -95,11 +102,13 @@ Published in the repository README rather than left to be discovered:
   consumer that needs it.*
 - **`resume` drives new work synchronously**, so a resumed segment cannot
   contain an `async def` node.
-- **No anchor.** The trace carries a hash chain and a per-trace root; it does
-  not publish that root anywhere the operator cannot rewrite it. Without an
-  anchor the chain proves internal consistency, not immutability. Motus ships
-  no anchor and holds no chain credentials by decision: the repository provides
-  the socket, not the plug.
+- **No network anchor inside the kernel.** The trace carries a hash chain and a
+  per-trace root, but internal consistency alone is not immutability. Motus
+  keeps the `Anchor` and `Witness` protocols outside the zero-dependency kernel.
+  The separate `motus-anchor-opentimestamps` plug provides a free Bitcoin-backed
+  anchor; no Witness implementation currently ships. An anchor protects the
+  chain after publication, while only a witness can establish pre-outcome
+  execution continuity.
 - **Never exactly-once.** Resume is an at-least-once condition with idempotent
   effects, and Motus promises exactly-once in no version, ever.
 
@@ -114,6 +123,10 @@ Published in the repository README rather than left to be discovered:
 | `TraceSink` | durable evidence. `JsonlTraceSink` writes one validator-ready JSONL document per run. |
 | `ReplayEngine` | playback (reconstruct state), verify (re-execute pure nodes), resume (linked new segment). |
 | `motus-validate` | the shipped validator. Checks a trace against the published contract, in a process that need not be the one that produced it. |
+| `EvidenceAPI` | read-only receipt, package and package-verification boundary keyed by canonical execution reference. |
+| `motus-evidence` | deterministic inspect, verify and bounded-query CLI over explicitly supplied artifacts. |
+| Regulatory contracts | jurisdiction-neutral declarations and binding verifiers for manifests, risk/control, oversight, incidents, retention, registries, profiles and dossiers. |
+| Adapter profile v1 | transport-neutral envelope and conformance corpus for third-party hosts without duplicating Motus semantics. |
 
 The validator ships with the distribution because **a trace nobody can check is
 a log**. That is the product.
@@ -124,3 +137,9 @@ a log**. That is the product.
   three things a node can say when something goes wrong.
 - [The trace](./the-trace) — what it contains, how to validate it, how to store
   it without breaking the integrity chain, and what the root is for.
+- [Regulatory evidence](./regulatory-evidence) — the evidence model shipped from
+  v0.15.0 through v0.22.0, and the boundary between declarations, bindings and
+  compliance claims.
+- [Adapter profile v1](./adapter-profile) — how third-party hosts transport
+  Motus receipts, packages and verification/query results without becoming a
+  second verifier.
