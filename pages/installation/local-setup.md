@@ -2,6 +2,8 @@
 
 > **Last updated**: Mar 11, 2026 14:00 UTC
 
+> **Note:** this page describes the legacy `vit setup` flow. It is being replaced by **vit 2**, which installs Vitruvyan products and `.vit` packages through signed indexes and reviewable plans — see [vit](/vit).
+
 Step-by-step guide for installing Vitruvyan OS manually, without the one-liner installer.
 
 ## Prerequisites
