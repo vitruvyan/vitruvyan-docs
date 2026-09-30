@@ -2,6 +2,8 @@
 
 > **Last updated**: Mar 11, 2026 14:00 UTC
 
+> **Note:** this page describes the legacy `vit setup`/`vit update` flow. It is being replaced by **vit 2**, which installs Vitruvyan products and `.vit` packages through signed indexes and reviewable plans — see [vit](/vit).
+
 ## Quick Start (One-Liner)
 
 On a **fresh Ubuntu VPS** (24.04 LTS recommended), run:
