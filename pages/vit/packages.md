@@ -15,7 +15,7 @@ URL. Before searching for or installing anything, configure at least one source:
 ```bash
 vit packages sources add \
   --set name=vitruvyan-public \
-  --set url=https://packages.vitruvyan.dev/public \
+  --set url=https://packages.example.com/public \
   --set channel=public \
   --set root_keyids=sha256:<hex>,sha256:<hex>
 ```

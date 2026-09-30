@@ -54,7 +54,7 @@ Two different things live under `vit`, and the distinction matters for how each 
 
 | Area | Status |
 |---|---|
-| Package format, build, and signing (`vit pkg build`, dev signing keys) | Works |
+| Package format, build, and signing (through the `vit.pkg` Python library and the example build script; a dedicated `vit` command for package authors is not available yet; development signing keys only) | Works |
 | Signed indexes and three-level verification | Works |
 | `vit packages search / info / list / verify` | Works |
 | `vit packages install / remove / upgrade` with plan → approval → apply | Works |
